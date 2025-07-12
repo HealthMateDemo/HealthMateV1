@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Brain, Heart, X, Plus, Search, MoreVertical, Send, Save, FolderOpen, Settings } from "lucide-react";
+import { Brain, Heart, X, Plus, Search, MoreVertical, Send, Save, FolderOpen, Settings, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { websocketService, WebSocketMessage } from "@/lib/websocket";
 import GradientIcon from "@/components/atoms/GradientIcon";
 import TypingIndicator from "@/components/atoms/TypingIndicator";
+import ReactDOM from "react-dom";
 import { useRef } from "react";
 
 // Types for chat functionality
@@ -53,6 +54,14 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   // Add state for new category creation
   const [newCategory, setNewCategory] = useState("");
+
+  // Add state for settings panel
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Define default categories
+  const defaultCategories = ["all", "saved"];
+
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   // WebSocket connection
   useEffect(() => {
@@ -175,7 +184,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   // Filter conversations by category and search term
   const filteredConversations = conversations.filter((c) => {
     let matchesCategory = true;
-    if (categoryFilter) {
+    if (categoryFilter && categoryFilter !== "all") {
       matchesCategory = (typeof c.category === "string" ? c.category.trim().toLowerCase() : "") === categoryFilter.trim().toLowerCase();
     }
     const matchesSearch =
@@ -256,9 +265,14 @@ export default function MainChatArea({ onClose, conversations, currentConversati
               <GradientIcon icon={Heart} size="md" />
               <span className="font-semibold text-slate-800">ZenHealth AI</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-slate-500 hover:text-slate-700">
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <button ref={settingsButtonRef} onClick={() => setSettingsOpen((v) => !v)} className="text-slate-500 hover:text-slate-700 p-1 rounded-full focus:outline-none">
+                <Settings className="w-5 h-5" />
+              </button>
+              <Button variant="ghost" size="sm" onClick={onClose} className="text-slate-500 hover:text-slate-700">
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <Button onClick={createNewConversation} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white">
@@ -301,19 +315,18 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         <div className="p-4 border-t border-slate-200">
           <h3 className="font-medium text-slate-700 mb-3">Categories</h3>
           <div className="flex flex-wrap gap-2 mb-2">
-            <button
-              className={`px-2 py-1 rounded text-xs ${!categoryFilter ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
-              onClick={() => setCategoryFilter(null)}
-            >
-              All
-            </button>
-            {categories.map((cat) => (
+            {["all", ...categories].map((cat) => (
               <button
                 key={cat}
-                className={`px-2 py-1 rounded text-xs ${categoryFilter === cat ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
+                className={`px-2 py-1 rounded text-xs flex items-center gap-1 ${categoryFilter === cat ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
                 onClick={() => setCategoryFilter(cat)}
               >
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                {defaultCategories.includes(cat) ? (
+                  <span className="ml-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold">Default</span>
+                ) : (
+                  <span className="ml-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold">Created</span>
+                )}
               </button>
             ))}
           </div>
@@ -353,25 +366,27 @@ export default function MainChatArea({ onClose, conversations, currentConversati
               </button>
             </div>
           )}
-          <div className="space-y-2 mt-4">
+          <div className="space-y-2 mt-4 overflow-y-auto max-h-48 pr-1">
             <div className="flex items-center space-x-2 text-sm text-slate-600 hover:text-slate-800 cursor-pointer">
               <FolderOpen className="w-4 h-4" />
               <span>All Conversations</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold">Default</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-slate-600 hover:text-slate-800 cursor-pointer">
               <Save className="w-4 h-4" />
               <span>Saved</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold">Default</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm text-slate-600 hover:text-slate-800 cursor-pointer">
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between mt-6">
-            <span className="text-xs text-slate-400">Danger Zone</span>
-            <button onClick={handleResetAll} className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition" title="Clear all conversations and messages">
-              Reset All
-            </button>
+            {/* User-created categories */}
+            {categories
+              .filter((cat) => !defaultCategories.includes(cat))
+              .map((cat) => (
+                <div key={cat} className="flex items-center space-x-2 text-sm text-slate-600 hover:text-slate-800 cursor-pointer">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
+                  <span className="ml-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold">Created</span>
+                </div>
+              ))}
           </div>
         </div>
       </div>
@@ -492,6 +507,38 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           </div>
         </div>
       </div>
+
+      {/* Settings Portal Dropdown */}
+      {settingsOpen &&
+        typeof window !== "undefined" &&
+        ReactDOM.createPortal(
+          <div className="fixed inset-0 z-50" onClick={() => setSettingsOpen(false)} style={{ pointerEvents: "auto" }}>
+            <div
+              className="absolute bg-white rounded-2xl shadow-xl p-6 w-64 transition-all duration-300 ease-out"
+              style={{
+                top: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().bottom + 8 : 80,
+                left: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().left : 80,
+                opacity: settingsOpen ? 1 : 0,
+                transform: settingsOpen ? "scale(1)" : "scale(0.95)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold mb-4">Settings</h2>
+              <div className="mt-6">
+                <span className="text-xs text-slate-400">Danger Zone</span>
+                <button
+                  onClick={handleResetAll}
+                  className="w-full mt-2 px-3 py-2 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition"
+                  title="Clear all conversations and messages"
+                >
+                  Reset All
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
