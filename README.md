@@ -1,6 +1,5 @@
-# ZenHealth AI - Wellness Chat Interface
-
-A modern, AI-powered wellness chat application built with Next.js, featuring real-time messaging, persistent state management, and a beautiful user interface.
+# HealthMate - A health platform powered by AI
+A modern, AI-powered health chat application built with Next.js, featuring real-time messaging, persistent state management, and a beautiful user interface.
 
 ## Features
 
