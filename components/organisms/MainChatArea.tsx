@@ -46,6 +46,14 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [categoryInput, setCategoryInput] = useState("");
 
+  // Add state for search functionality
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+
+  // Add state for new category creation
+  const [newCategory, setNewCategory] = useState("");
+
   // WebSocket connection
   useEffect(() => {
     websocketService.connect();
@@ -133,11 +141,47 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
   };
 
-  // Get unique categories from conversations
-  const categories = Array.from(new Set(conversations.map((c) => c.category).filter(Boolean)));
+  // Update conversation title
+  const handleTitleEdit = () => {
+    if (!currentConversation || !editedTitle.trim()) return;
+    const updatedConversation = { ...currentConversation, title: editedTitle.trim() };
+    setCurrentConversation(updatedConversation);
+    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
+    setIsEditingTitle(false);
+  };
 
-  // Filter conversations by category if filter is set
-  const filteredConversations = categoryFilter ? conversations.filter((c) => c.category === categoryFilter) : conversations;
+  // Helper to get unique, trimmed, case-insensitive categories (no nulls)
+  const categories = Array.from(
+    new Set(conversations.map((c) => (typeof c.category === "string" ? c.category.trim().toLowerCase() : null)).filter((cat): cat is string => Boolean(cat))),
+  );
+
+  // Add a new category
+  const handleAddCategory = () => {
+    const cat = newCategory.trim().toLowerCase();
+    if (cat && !categories.includes(cat)) {
+      categories.push(cat);
+    }
+    setNewCategory("");
+  };
+
+  // Assign a category to the current conversation
+  const handleAssignCategory = (cat: string) => {
+    if (!currentConversation) return;
+    const updatedConversation = { ...currentConversation, category: cat };
+    setCurrentConversation(updatedConversation);
+    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
+  };
+
+  // Filter conversations by category and search term
+  const filteredConversations = conversations.filter((c) => {
+    let matchesCategory = true;
+    if (categoryFilter) {
+      matchesCategory = (typeof c.category === "string" ? c.category.trim().toLowerCase() : "") === categoryFilter.trim().toLowerCase();
+    }
+    const matchesSearch =
+      searchTerm.trim() === "" || c.title.toLowerCase().includes(searchTerm.toLowerCase()) || c.messages.some((m) => m.content.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesCategory && matchesSearch;
+  });
 
   console.log(
     "Conversation keys:",
@@ -149,6 +193,12 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       currentConversation.messages.map((m, idx) => (typeof m.id === "string" && m.id.trim().length > 0 ? m.id : `msg-fallback-${idx}`)),
     );
   }
+
+  // DEBUG: Log all conversation categories and their values
+  console.log(
+    "All conversation categories:",
+    conversations.map((c) => ({ id: c.id, category: c.category })),
+  );
 
   const activeConversation = conversations.find((conv) => conv.id === currentConversation?.id) || currentConversation;
 
@@ -221,7 +271,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         <div className="p-4 border-b border-slate-200">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input placeholder="Search conversations..." className="pl-10 bg-white border-slate-200" />
+            <Input placeholder="Search conversations..." className="pl-10 bg-white border-slate-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </div>
 
@@ -261,11 +311,27 @@ export default function MainChatArea({ onClose, conversations, currentConversati
               <button
                 key={cat}
                 className={`px-2 py-1 rounded text-xs ${categoryFilter === cat ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
-                onClick={() => setCategoryFilter(cat || "")}
+                onClick={() => setCategoryFilter(cat)}
               >
-                {cat}
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
               </button>
             ))}
+          </div>
+          {/* Create new category */}
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              type="text"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="Create category..."
+              className="border rounded px-2 py-1 text-xs"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleAddCategory();
+              }}
+            />
+            <button className="bg-emerald-500 text-white px-2 py-1 rounded text-xs" onClick={handleAddCategory} disabled={!newCategory.trim()}>
+              Add
+            </button>
           </div>
           {currentConversation && (
             <div className="flex items-center gap-2 mt-2">
@@ -318,11 +384,52 @@ export default function MainChatArea({ onClose, conversations, currentConversati
             <div className="flex items-center space-x-3">
               <GradientIcon icon={Brain} size="lg" />
               <div>
-                <h2 className="font-semibold text-slate-800">{currentConversation?.title || "New Conversation"}</h2>
+                {isEditingTitle ? (
+                  <input
+                    className="font-semibold text-slate-800 text-lg border-b border-emerald-400 outline-none bg-transparent"
+                    value={editedTitle}
+                    autoFocus
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    onBlur={handleTitleEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleTitleEdit();
+                      } else if (e.key === "Escape") {
+                        setIsEditingTitle(false);
+                      }
+                    }}
+                  />
+                ) : (
+                  <h2
+                    className="font-semibold text-slate-800 cursor-pointer"
+                    title="Click to edit title"
+                    onClick={() => {
+                      setIsEditingTitle(true);
+                      setEditedTitle(currentConversation?.title || "");
+                    }}
+                  >
+                    {currentConversation?.title || "New Conversation"}
+                  </h2>
+                )}
                 <p className="text-sm text-slate-500">AI Health Assistant • Online</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              {/* Category assignment dropdown */}
+              {currentConversation && (
+                <select
+                  className="border rounded px-2 py-1 text-xs mr-2"
+                  value={typeof currentConversation.category === "string" ? currentConversation.category.trim().toLowerCase() : ""}
+                  onChange={(e) => handleAssignCategory(e.target.value)}
+                >
+                  <option value="">No Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              )}
               <Button variant="ghost" size="sm" onClick={saveConversation} disabled={currentConversation?.isSaved} className="text-slate-500 hover:text-slate-700">
                 <Save className="w-4 h-4" />
               </Button>
