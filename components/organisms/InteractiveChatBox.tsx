@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatMessage from "@/components/molecules/ChatMessage";
+import GradientIcon from "@/components/atoms/GradientIcon";
+import TypingIndicator from "@/components/atoms/TypingIndicator";
 
 const InteractiveChatBox = () => {
   const [mode, setMode] = useState<"text" | "image" | "voice">("text");
@@ -258,9 +260,7 @@ const InteractiveChatBox = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
-                  <Brain className="w-5 h-5 text-white" />
-                </div>
+                <GradientIcon icon={Brain} size="lg" />
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                   <Sparkles className="w-2 h-2 text-white" />
                 </div>
@@ -312,9 +312,7 @@ const InteractiveChatBox = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
-                  <ImageIcon className="w-5 h-5 text-white" />
-                </div>
+                <GradientIcon icon={ImageIcon} size="lg" />
               </div>
               <div>
                 <p className="font-semibold text-slate-800">Image Upload</p>
@@ -408,22 +406,12 @@ const InteractiveChatBox = () => {
             )}
             {isUploading && (
               <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <Brain className="w-4 h-4 text-white" />
+                <div className="flex-shrink-0 mt-1">
+                  <GradientIcon icon={Brain} size="md" />
                 </div>
                 <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-4 max-w-[80%]">
                   <div className="flex items-center space-x-2">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                    </div>
+                    <TypingIndicator color="bg-white" />
                     <span className="text-sm">Analyzing your image...</span>
                   </div>
                 </div>
@@ -469,9 +457,7 @@ const InteractiveChatBox = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
-                  <Mic className="w-5 h-5 text-white" />
-                </div>
+                <GradientIcon icon={Mic} size="lg" />
               </div>
               <div>
                 <p className="font-semibold text-slate-800">Voice Message</p>
@@ -539,22 +525,12 @@ const InteractiveChatBox = () => {
             </div>
             {isProcessingVoice && (
               <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <Brain className="w-4 h-4 text-white" />
+                <div className="flex-shrink-0 mt-1">
+                  <GradientIcon icon={Brain} size="md" />
                 </div>
                 <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-4 max-w-[80%]">
                   <div className="flex items-center space-x-2">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                    </div>
+                    <TypingIndicator color="bg-white" />
                     <span className="text-sm">
                       Processing your voice message...
                     </span>

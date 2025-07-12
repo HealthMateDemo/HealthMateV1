@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Shield, CheckCircle, Sparkles } from "lucide-react";
+import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import React from "react";
+import GradientIcon from "@/components/atoms/GradientIcon";
 
 interface HeaderProps {
   onGetStarted?: () => void;
@@ -16,9 +17,7 @@ const Header: React.FC<HeaderProps> = ({ onGetStarted }) => (
   >
     <nav className="flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
-          <Heart className="w-4 h-4 text-white" />
-        </div>
+        <GradientIcon icon={Heart} size="md" />
         <span className="text-xl font-semibold text-slate-800">
           ZenHealth AI
         </span>
