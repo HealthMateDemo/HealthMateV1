@@ -60,9 +60,7 @@ export class WebSocketService {
   private attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(
-        `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
-      );
+      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
 
       setTimeout(() => {
         this.connect();
@@ -100,6 +98,10 @@ export class WebSocketService {
 
   onMessage(handler: (message: WebSocketMessage) => void) {
     this.messageHandlers.push(handler);
+    // Return an unsubscribe function
+    return () => {
+      this.messageHandlers = this.messageHandlers.filter((h) => h !== handler);
+    };
   }
 
   private notifyHandlers(message: WebSocketMessage) {

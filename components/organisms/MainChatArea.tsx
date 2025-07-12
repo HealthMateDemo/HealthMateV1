@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { websocketService, WebSocketMessage } from "@/lib/websocket";
 import GradientIcon from "@/components/atoms/GradientIcon";
 import TypingIndicator from "@/components/atoms/TypingIndicator";
+import { useRef } from "react";
 
 // Types for chat functionality
 interface Message {
@@ -39,67 +40,55 @@ interface MainChatAreaProps {
 export default function MainChatArea({ onClose, conversations, currentConversation, setConversations, setCurrentConversation }: MainChatAreaProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [websocketError, setWebsocketError] = useState<string | null>(null);
+
+  // Add state for category filter
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [categoryInput, setCategoryInput] = useState("");
 
   // WebSocket connection
   useEffect(() => {
     websocketService.connect();
-    websocketService.onMessage(handleWebSocketMessage);
+    const unsubscribe = websocketService.onMessage(handleWebSocketMessage);
     return () => {
+      unsubscribe(); // Remove the handler on unmount
       websocketService.disconnect();
     };
   }, []);
 
-  const handleWebSocketMessage = (message: WebSocketMessage) => {
-    if (message.type === "message" && message.sender === "ai" && currentConversation) {
-      const aiMessage: Message = {
-        id: Date.now().toString(),
-        content: message.content || "No content received",
-        sender: "ai",
-        timestamp: message.timestamp || new Date(),
-        type: "text",
-      };
+  // Helper to get the latest conversation object by id
+  const getConversationById = (id: string | undefined | null) => conversations.find((c) => c.id === id) || null;
 
-      const updatedConversation = {
-        ...currentConversation,
-        messages: [...currentConversation.messages, aiMessage],
-        updatedAt: new Date(),
-      };
-
-      setCurrentConversation(updatedConversation);
-      setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
-      setIsTyping(false);
-    } else if (message.type === "typing") {
-      setIsTyping(true);
-    } else if (message.type === "error") {
-      console.error("WebSocket error:", message.content);
-      setIsTyping(false);
-    }
+  // When switching conversations, always set currentConversation to the object from conversations array
+  const handleSelectConversation = (conversationId: string) => {
+    setCurrentConversation(getConversationById(conversationId));
   };
 
+  // In handleSendMessage, after updating conversations, set currentConversation to the updated object from conversations
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !currentConversation) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: generateId(),
       content: inputMessage,
       sender: "user",
       timestamp: new Date(),
       type: "text",
     };
 
-    // Add user message to conversation
-    const updatedConversation = {
-      ...currentConversation,
-      messages: [...currentConversation.messages, userMessage],
-      updatedAt: new Date(),
-    };
+    setConversations((prev) => {
+      // Find the correct conversation by id
+      const updated = prev.map((conv) => (conv.id === currentConversation.id ? { ...conv, messages: [...conv.messages, userMessage], updatedAt: new Date() } : conv));
+      // Set currentConversation to the updated object from the new array
+      const updatedCurrent = updated.find((c) => c.id === currentConversation.id) || null;
+      setCurrentConversation(updatedCurrent);
+      console.log("After send, currentConversation.messages:", updatedCurrent?.messages);
+      return updated;
+    });
 
-    setCurrentConversation(updatedConversation);
-    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
     setInputMessage("");
     setIsTyping(true);
 
-    // Send message via WebSocket
     websocketService.sendMessage({
       type: "message",
       content: inputMessage,
@@ -117,7 +106,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   const createNewConversation = () => {
     const newConversation: Conversation = {
-      id: Date.now().toString(),
+      id: generateId(),
       title: "New Wellness Session",
       messages: [],
       createdAt: new Date(),
@@ -132,6 +121,78 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     const updatedConversation = { ...currentConversation, isSaved: true };
     setCurrentConversation(updatedConversation);
     setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
+  };
+
+  const generateId = () => (window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now().toString());
+
+  // Add a function to update the category of the current conversation
+  const updateConversationCategory = (category: string) => {
+    if (!currentConversation) return;
+    const updatedConversation = { ...currentConversation, category };
+    setCurrentConversation(updatedConversation);
+    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
+  };
+
+  // Get unique categories from conversations
+  const categories = Array.from(new Set(conversations.map((c) => c.category).filter(Boolean)));
+
+  // Filter conversations by category if filter is set
+  const filteredConversations = categoryFilter ? conversations.filter((c) => c.category === categoryFilter) : conversations;
+
+  console.log(
+    "Conversation keys:",
+    filteredConversations.map((c, idx) => (typeof c.id === "string" && c.id.trim().length > 0 ? c.id : `conv-fallback-${idx}`)),
+  );
+  if (currentConversation) {
+    console.log(
+      "Message keys:",
+      currentConversation.messages.map((m, idx) => (typeof m.id === "string" && m.id.trim().length > 0 ? m.id : `msg-fallback-${idx}`)),
+    );
+  }
+
+  const activeConversation = conversations.find((conv) => conv.id === currentConversation?.id) || currentConversation;
+
+  // In handleWebSocketMessage, after updating conversations, set currentConversation to the updated object from conversations
+  const handleWebSocketMessage = (message: WebSocketMessage) => {
+    if (message.type === "message" && message.sender === "ai" && message.conversationId) {
+      setConversations((prev) => {
+        // Always use the latest messages array from state
+        const updated = prev.map((conv) => {
+          if (conv.id === message.conversationId) {
+            const aiMessage: Message = {
+              id: generateId(),
+              content: message.content || "No content received",
+              sender: "ai",
+              timestamp: message.timestamp || new Date(),
+              type: "text",
+            };
+            return {
+              ...conv,
+              messages: [...conv.messages, aiMessage],
+              updatedAt: new Date(),
+            };
+          }
+          return conv;
+        });
+        // If the user is viewing this conversation, update currentConversation as well
+        if (currentConversation?.id === message.conversationId) {
+          const updatedCurrent = updated.find((c) => c.id === message.conversationId) || null;
+          setCurrentConversation(updatedCurrent);
+        }
+        return updated;
+      });
+      setIsTyping(false);
+    } else if (message.type === "typing") {
+      setIsTyping(true);
+    } else if (message.type === "error") {
+      console.error("WebSocket error:", message.content);
+      setIsTyping(false);
+    }
+  };
+
+  const handleResetAll = () => {
+    localStorage.removeItem("zenhealth-chat-state");
+    window.location.reload();
   };
 
   return (
@@ -167,10 +228,10 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         {/* Conversations List */}
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-2">
-            {conversations.map((conversation) => (
+            {filteredConversations.map((conversation, idx) => (
               <div
-                key={conversation.id}
-                onClick={() => setCurrentConversation(conversation)}
+                key={typeof conversation.id === "string" && conversation.id.trim().length > 0 ? conversation.id : `conv-fallback-${idx}`}
+                onClick={() => handleSelectConversation(conversation.id)}
                 className={`p-3 rounded-lg cursor-pointer transition-colors ${
                   currentConversation?.id === conversation.id ? "bg-emerald-100 border border-emerald-200" : "hover:bg-slate-100"
                 }`}
@@ -189,7 +250,44 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         {/* Categories */}
         <div className="p-4 border-t border-slate-200">
           <h3 className="font-medium text-slate-700 mb-3">Categories</h3>
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2 mb-2">
+            <button
+              className={`px-2 py-1 rounded text-xs ${!categoryFilter ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
+              onClick={() => setCategoryFilter(null)}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                className={`px-2 py-1 rounded text-xs ${categoryFilter === cat ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
+                onClick={() => setCategoryFilter(cat || "")}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          {currentConversation && (
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="text"
+                value={categoryInput}
+                onChange={(e) => setCategoryInput(e.target.value)}
+                placeholder="Set category..."
+                className="border rounded px-2 py-1 text-xs"
+              />
+              <button
+                className="bg-emerald-500 text-white px-2 py-1 rounded text-xs"
+                onClick={() => {
+                  updateConversationCategory(categoryInput);
+                  setCategoryInput("");
+                }}
+              >
+                Set
+              </button>
+            </div>
+          )}
+          <div className="space-y-2 mt-4">
             <div className="flex items-center space-x-2 text-sm text-slate-600 hover:text-slate-800 cursor-pointer">
               <FolderOpen className="w-4 h-4" />
               <span>All Conversations</span>
@@ -202,6 +300,12 @@ export default function MainChatArea({ onClose, conversations, currentConversati
               <Settings className="w-4 h-4" />
               <span>Settings</span>
             </div>
+          </div>
+          <div className="flex items-center justify-between mt-6">
+            <span className="text-xs text-slate-400">Danger Zone</span>
+            <button onClick={handleResetAll} className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition" title="Clear all conversations and messages">
+              Reset All
+            </button>
           </div>
         </div>
       </div>
@@ -232,11 +336,16 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         {/* Messages Area */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            {currentConversation?.messages.map((message) => (
-              <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
+            {currentConversation?.messages.map((message, idx) => (
+              <div
+                key={typeof message.id === "string" && message.id.trim().length > 0 ? message.id : `msg-fallback-${idx}`}
+                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <div className={`max-w-[70%] rounded-2xl p-4 ${message.sender === "user" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-800"}`}>
                   <p className="text-sm">{message.content}</p>
-                  <p className={`text-xs mt-2 ${message.sender === "user" ? "text-emerald-100" : "text-slate-500"}`}>{message.timestamp.toLocaleTimeString()}</p>
+                  <p className={`text-xs mt-2 ${message.sender === "user" ? "text-emerald-100" : "text-slate-500"}`}>
+                    {(message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp)).toLocaleTimeString()}
+                  </p>
                 </div>
               </div>
             ))}

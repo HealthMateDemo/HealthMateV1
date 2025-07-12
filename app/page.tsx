@@ -38,36 +38,44 @@ export default function LandingPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
 
+  const generateId = () => (window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now().toString());
+
   // Load state from localStorage on component mount
   useEffect(() => {
     const savedState = localStorage.getItem("zenhealth-chat-state");
     if (savedState) {
       const parsed = JSON.parse(savedState);
-
-      // Convert string dates back to Date objects
+      // Defensive conversion for conversations and messages
       const conversations =
         parsed.conversations?.map((conv: any) => ({
           ...conv,
-          createdAt: new Date(conv.createdAt),
-          updatedAt: new Date(conv.updatedAt),
-          messages: conv.messages?.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          })),
+          id: conv.id && typeof conv.id === "string" && conv.id.length > 0 ? conv.id : generateId(),
+          createdAt: conv.createdAt ? new Date(conv.createdAt) : new Date(),
+          updatedAt: conv.updatedAt ? new Date(conv.updatedAt) : new Date(),
+          messages:
+            conv.messages?.map((msg: any) => ({
+              ...msg,
+              id: msg.id && typeof msg.id === "string" && msg.id.length > 0 ? msg.id : generateId(),
+              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+            })) || [],
         })) || [];
-
       const currentConversation = parsed.currentConversation
         ? {
             ...parsed.currentConversation,
-            createdAt: new Date(parsed.currentConversation.createdAt),
-            updatedAt: new Date(parsed.currentConversation.updatedAt),
-            messages: parsed.currentConversation.messages?.map((msg: any) => ({
-              ...msg,
-              timestamp: new Date(msg.timestamp),
-            })),
+            id:
+              parsed.currentConversation.id && typeof parsed.currentConversation.id === "string" && parsed.currentConversation.id.length > 0
+                ? parsed.currentConversation.id
+                : generateId(),
+            createdAt: parsed.currentConversation.createdAt ? new Date(parsed.currentConversation.createdAt) : new Date(),
+            updatedAt: parsed.currentConversation.updatedAt ? new Date(parsed.currentConversation.updatedAt) : new Date(),
+            messages:
+              parsed.currentConversation.messages?.map((msg: any) => ({
+                ...msg,
+                id: msg.id && typeof msg.id === "string" && msg.id.length > 0 ? msg.id : generateId(),
+                timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+              })) || [],
           }
         : null;
-
       setShowChat(parsed.showChat || false);
       setConversations(conversations);
       setCurrentConversation(currentConversation);
@@ -96,7 +104,7 @@ export default function LandingPage() {
     // Create a new conversation if none exists
     if (!currentConversation) {
       const newConversation: Conversation = {
-        id: Date.now().toString(),
+        id: generateId(),
         title: "New Wellness Session",
         messages: [],
         createdAt: new Date(),
@@ -145,6 +153,7 @@ export default function LandingPage() {
       <AnimatePresence>
         {showChat && (
           <MainChatArea
+            key="main-chat-area"
             onClose={() => setShowChat(false)}
             conversations={conversations}
             currentConversation={currentConversation}
@@ -153,6 +162,7 @@ export default function LandingPage() {
           />
         )}
         <LearnMoreModal
+          key="learn-more-modal"
           open={showLearnMoreModal}
           onClose={closeLearnMoreModal}
           onSelect={(focus: string) => {
