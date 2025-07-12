@@ -1,18 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  Brain,
-  Heart,
-  X,
-  Plus,
-  Search,
-  MoreVertical,
-  Send,
-  Save,
-  FolderOpen,
-  Settings,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Brain, Heart, X, Plus, Search, MoreVertical, Send, Save, FolderOpen, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -47,13 +36,7 @@ interface MainChatAreaProps {
   setCurrentConversation: React.Dispatch<React.SetStateAction<Conversation | null>>;
 }
 
-export default function MainChatArea({
-  onClose,
-  conversations,
-  currentConversation,
-  setConversations,
-  setCurrentConversation,
-}: MainChatAreaProps) {
+export default function MainChatArea({ onClose, conversations, currentConversation, setConversations, setCurrentConversation }: MainChatAreaProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
@@ -67,11 +50,7 @@ export default function MainChatArea({
   }, []);
 
   const handleWebSocketMessage = (message: WebSocketMessage) => {
-    if (
-      message.type === "message" &&
-      message.sender === "ai" &&
-      currentConversation
-    ) {
+    if (message.type === "message" && message.sender === "ai" && currentConversation) {
       const aiMessage: Message = {
         id: Date.now().toString(),
         content: message.content || "No content received",
@@ -87,11 +66,7 @@ export default function MainChatArea({
       };
 
       setCurrentConversation(updatedConversation);
-      setConversations((prev) =>
-        prev.map((conv) =>
-          conv.id === currentConversation.id ? updatedConversation : conv
-        )
-      );
+      setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
       setIsTyping(false);
     } else if (message.type === "typing") {
       setIsTyping(true);
@@ -120,11 +95,7 @@ export default function MainChatArea({
     };
 
     setCurrentConversation(updatedConversation);
-    setConversations((prev) =>
-      prev.map((conv) =>
-        conv.id === currentConversation.id ? updatedConversation : conv
-      )
-    );
+    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
     setInputMessage("");
     setIsTyping(true);
 
@@ -160,11 +131,7 @@ export default function MainChatArea({
     if (!currentConversation) return;
     const updatedConversation = { ...currentConversation, isSaved: true };
     setCurrentConversation(updatedConversation);
-    setConversations((prev) =>
-      prev.map((conv) =>
-        conv.id === currentConversation.id ? updatedConversation : conv
-      )
-    );
+    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
   };
 
   return (
@@ -178,20 +145,12 @@ export default function MainChatArea({
               <GradientIcon icon={Heart} size="md" />
               <span className="font-semibold text-slate-800">ZenHealth AI</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-slate-500 hover:text-slate-700"
-            >
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-slate-500 hover:text-slate-700">
               <X className="w-4 h-4" />
             </Button>
           </div>
 
-          <Button
-            onClick={createNewConversation}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
-          >
+          <Button onClick={createNewConversation} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white">
             <Plus className="w-4 h-4 mr-2" />
             New Conversation
           </Button>
@@ -201,10 +160,7 @@ export default function MainChatArea({
         <div className="p-4 border-b border-slate-200">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Search conversations..."
-              className="pl-10 bg-white border-slate-200"
-            />
+            <Input placeholder="Search conversations..." className="pl-10 bg-white border-slate-200" />
           </div>
         </div>
 
@@ -216,25 +172,15 @@ export default function MainChatArea({
                 key={conversation.id}
                 onClick={() => setCurrentConversation(conversation)}
                 className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                  currentConversation?.id === conversation.id
-                    ? "bg-emerald-100 border border-emerald-200"
-                    : "hover:bg-slate-100"
+                  currentConversation?.id === conversation.id ? "bg-emerald-100 border border-emerald-200" : "hover:bg-slate-100"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-medium text-slate-800 truncate">
-                    {conversation.title}
-                  </h4>
-                  {conversation.isSaved && (
-                    <Save className="w-3 h-3 text-emerald-500" />
-                  )}
+                  <h4 className="font-medium text-slate-800 truncate">{conversation.title}</h4>
+                  {conversation.isSaved && <Save className="w-3 h-3 text-emerald-500" />}
                 </div>
-                <p className="text-xs text-slate-500">
-                  {conversation.messages.length} messages
-                </p>
-                <p className="text-xs text-slate-400">
-                  {conversation.updatedAt.toLocaleDateString()}
-                </p>
+                <p className="text-xs text-slate-500">{conversation.messages.length} messages</p>
+                <p className="text-xs text-slate-400">{conversation.updatedAt.toLocaleDateString()}</p>
               </div>
             ))}
           </div>
@@ -268,29 +214,15 @@ export default function MainChatArea({
             <div className="flex items-center space-x-3">
               <GradientIcon icon={Brain} size="lg" />
               <div>
-                <h2 className="font-semibold text-slate-800">
-                  {currentConversation?.title || "New Conversation"}
-                </h2>
-                <p className="text-sm text-slate-500">
-                  AI Health Assistant • Online
-                </p>
+                <h2 className="font-semibold text-slate-800">{currentConversation?.title || "New Conversation"}</h2>
+                <p className="text-sm text-slate-500">AI Health Assistant • Online</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={saveConversation}
-                disabled={currentConversation?.isSaved}
-                className="text-slate-500 hover:text-slate-700"
-              >
+              <Button variant="ghost" size="sm" onClick={saveConversation} disabled={currentConversation?.isSaved} className="text-slate-500 hover:text-slate-700">
                 <Save className="w-4 h-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-500 hover:text-slate-700"
-              >
+              <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-700">
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </div>
@@ -301,29 +233,10 @@ export default function MainChatArea({
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {currentConversation?.messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.sender === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[70%] rounded-2xl p-4 ${
-                    message.sender === "user"
-                      ? "bg-emerald-500 text-white"
-                      : "bg-slate-100 text-slate-800"
-                  }`}
-                >
+              <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[70%] rounded-2xl p-4 ${message.sender === "user" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-800"}`}>
                   <p className="text-sm">{message.content}</p>
-                  <p
-                    className={`text-xs mt-2 ${
-                      message.sender === "user"
-                        ? "text-emerald-100"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    {message.timestamp.toLocaleTimeString()}
-                  </p>
+                  <p className={`text-xs mt-2 ${message.sender === "user" ? "text-emerald-100" : "text-slate-500"}`}>{message.timestamp.toLocaleTimeString()}</p>
                 </div>
               </div>
             ))}
@@ -333,9 +246,7 @@ export default function MainChatArea({
                 <div className="bg-slate-100 text-slate-800 rounded-2xl p-4">
                   <div className="flex items-center space-x-2">
                     <TypingIndicator color="bg-slate-400" />
-                    <span className="text-sm text-slate-500">
-                      AI is typing...
-                    </span>
+                    <span className="text-sm text-slate-500">AI is typing...</span>
                   </div>
                 </div>
               </div>

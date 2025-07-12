@@ -36,9 +36,7 @@ export default function LandingPage() {
   const [showChat, setShowChat] = useState(false);
   const [showLearnMoreModal, setShowLearnMoreModal] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversation, setCurrentConversation] =
-    useState<Conversation | null>(null);
-
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
 
   // Load state from localStorage on component mount
   useEffect(() => {
@@ -93,8 +91,6 @@ export default function LandingPage() {
     localStorage.setItem("zenhealth-chat-state", JSON.stringify(stateToSave));
   }, [showChat, conversations, currentConversation]);
 
-
-
   const handleStartJourney = () => {
     setShowChat(true);
     // Create a new conversation if none exists
@@ -111,8 +107,6 @@ export default function LandingPage() {
     }
   };
 
-
-
   const handleLearnMore = () => {
     setShowLearnMoreModal(true);
   };
@@ -120,8 +114,6 @@ export default function LandingPage() {
   const closeLearnMoreModal = () => {
     setShowLearnMoreModal(false);
   };
-
-
 
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
@@ -163,7 +155,7 @@ export default function LandingPage() {
         <LearnMoreModal
           open={showLearnMoreModal}
           onClose={closeLearnMoreModal}
-          onSelect={(focus) => {
+          onSelect={(focus: string) => {
             closeLearnMoreModal();
             handleStartJourney();
             // Optionally, handle focus ("health" or "mental")
@@ -184,16 +176,10 @@ export default function LandingPage() {
       />
 
       {/* Animated Roadmap */}
-      <AnimatedRoadmap
-        fadeInUp={fadeInUp}
-        staggerContainer={staggerContainer}
-      />
+      <AnimatedRoadmap fadeInUp={fadeInUp} staggerContainer={staggerContainer} />
 
       {/* Features Section */}
-      <FeaturesSection
-        fadeInUp={fadeInUp}
-        staggerContainer={staggerContainer}
-      />
+      <FeaturesSection fadeInUp={fadeInUp} staggerContainer={staggerContainer} />
 
       {/* Logo Banner */}
       <LogoBanner />

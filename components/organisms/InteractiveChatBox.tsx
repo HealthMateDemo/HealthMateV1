@@ -1,14 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  ImageIcon,
-  Brain,
-  Sparkles,
-  Send,
-  Mic,
-  MessageCircle,
-} from "lucide-react";
+import { ImageIcon, Brain, Sparkles, Send, Mic, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatMessage from "@/components/molecules/ChatMessage";
 import GradientIcon from "@/components/atoms/GradientIcon";
@@ -19,8 +12,7 @@ const InteractiveChatBox = () => {
   const [demoMessages, setDemoMessages] = useState([
     {
       id: "1",
-      content:
-        "I've been feeling anxious lately and having trouble sleeping. What can I do?",
+      content: "I've been feeling anxious lately and having trouble sleeping. What can I do?",
       sender: "user" as const,
       timestamp: new Date(),
     },
@@ -46,8 +38,7 @@ const InteractiveChatBox = () => {
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   };
 
@@ -181,9 +172,7 @@ const InteractiveChatBox = () => {
       "I've been experiencing headaches and fatigue",
       "Can you help me with some relaxation techniques?",
     ];
-    return sampleTranscriptions[
-      Math.floor(Math.random() * sampleTranscriptions.length)
-    ];
+    return sampleTranscriptions[Math.floor(Math.random() * sampleTranscriptions.length)];
   };
 
   const formatRecordingTime = (seconds: number): string => {
@@ -210,9 +199,7 @@ const InteractiveChatBox = () => {
     setTimeout(() => {
       const aiResponse = {
         id: (Date.now() + 1).toString(),
-        content: `I've received your image "${
-          file.name
-        }". I'm analyzing it now and will provide you with insights shortly. The image appears to be ${
+        content: `I've received your image "${file.name}". I'm analyzing it now and will provide you with insights shortly. The image appears to be ${
           file.type
         } format with a size of ${(file.size / 1024).toFixed(1)} KB.`,
         sender: "ai" as const,
@@ -266,24 +253,13 @@ const InteractiveChatBox = () => {
                 </div>
               </div>
               <div>
-                <p className="font-semibold text-slate-800">
-                  AI Health Assistant
-                </p>
-                <p className="text-sm text-slate-500">
-                  Online now • Powered by sundhed.dk
-                </p>
+                <p className="font-semibold text-slate-800">AI Health Assistant</p>
+                <p className="text-sm text-slate-500">Online now • Powered by sundhed.dk</p>
               </div>
             </div>
-            <div
-              ref={messagesContainerRef}
-              className="space-y-4 max-h-64 overflow-y-auto"
-            >
+            <div ref={messagesContainerRef} className="space-y-4 max-h-64 overflow-y-auto">
               {demoMessages.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  content={message.content}
-                  sender={message.sender}
-                />
+                <ChatMessage key={message.id} content={message.content} sender={message.sender} />
               ))}
             </div>
             <div className="flex items-end space-x-2 pt-2 border-t border-slate-200">
@@ -316,9 +292,7 @@ const InteractiveChatBox = () => {
               </div>
               <div>
                 <p className="font-semibold text-slate-800">Image Upload</p>
-                <p className="text-sm text-slate-500">
-                  Share photos for AI analysis
-                </p>
+                <p className="text-sm text-slate-500">Share photos for AI analysis</p>
               </div>
             </div>
             {uploadedImage ? (
@@ -331,11 +305,7 @@ const InteractiveChatBox = () => {
                     }}
                     title="Click to view full size"
                   >
-                    <img
-                      src={uploadedImage}
-                      alt="Uploaded"
-                      className="w-full h-32 object-cover rounded-lg transition-transform duration-200 group-hover:scale-105"
-                    />
+                    <img src={uploadedImage} alt="Uploaded" className="w-full h-32 object-cover rounded-lg transition-transform duration-200 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 rounded-lg flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-2">
                         <ImageIcon className="w-4 h-4 text-slate-700" />
@@ -344,12 +314,8 @@ const InteractiveChatBox = () => {
                   </div>
                   <div className="mt-2 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
-                      <p className="text-sm text-slate-600">
-                        Image uploaded successfully
-                      </p>
-                      <span className="text-xs text-slate-400">
-                        (Click to view full size)
-                      </span>
+                      <p className="text-sm text-slate-600">Image uploaded successfully</p>
+                      <span className="text-xs text-slate-400">(Click to view full size)</span>
                     </div>
                     <Button
                       variant="outline"
@@ -368,9 +334,7 @@ const InteractiveChatBox = () => {
             ) : (
               <div
                 className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors ${
-                  isDragOver
-                    ? "border-emerald-500 bg-emerald-50"
-                    : "border-emerald-300 bg-emerald-50"
+                  isDragOver ? "border-emerald-500 bg-emerald-50" : "border-emerald-300 bg-emerald-50"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -378,14 +342,8 @@ const InteractiveChatBox = () => {
                 onClick={triggerFileInput}
               >
                 <ImageIcon className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-                <p className="text-slate-700 mb-2">
-                  {isDragOver
-                    ? "Drop your image here"
-                    : "Upload a photo of your symptoms"}
-                </p>
-                <p className="text-sm text-slate-500 mb-4">
-                  Drag & drop or click to browse
-                </p>
+                <p className="text-slate-700 mb-2">{isDragOver ? "Drop your image here" : "Upload a photo of your symptoms"}</p>
+                <p className="text-sm text-slate-500 mb-4">Drag & drop or click to browse</p>
                 <Button
                   className="bg-emerald-500 hover:bg-emerald-600 text-white"
                   onClick={(e) => {
@@ -395,13 +353,7 @@ const InteractiveChatBox = () => {
                 >
                   Choose File
                 </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
               </div>
             )}
             {isUploading && (
@@ -417,16 +369,9 @@ const InteractiveChatBox = () => {
                 </div>
               </div>
             )}
-            <div
-              ref={messagesContainerRef}
-              className="space-y-4 max-h-32 overflow-y-auto"
-            >
+            <div ref={messagesContainerRef} className="space-y-4 max-h-32 overflow-y-auto">
               {demoMessages.slice(-2).map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  content={message.content}
-                  sender={message.sender}
-                />
+                <ChatMessage key={message.id} content={message.content} sender={message.sender} />
               ))}
             </div>
             {uploadedImage && !isUploading && (
@@ -477,9 +422,7 @@ const InteractiveChatBox = () => {
                   >
                     <Mic className="w-8 h-8 text-white" />
                   </motion.div>
-                  <p className="text-slate-700 mb-2">
-                    Recording... {formatRecordingTime(recordingTime)}
-                  </p>
+                  <p className="text-slate-700 mb-2">Recording... {formatRecordingTime(recordingTime)}</p>
                   <div className="flex justify-center space-x-1 mb-4">
                     {[...Array(5)].map((_, i) => (
                       <motion.div
@@ -494,11 +437,7 @@ const InteractiveChatBox = () => {
                       />
                     ))}
                   </div>
-                  <Button
-                    variant="outline"
-                    className="bg-white"
-                    onClick={stopRecording}
-                  >
+                  <Button variant="outline" className="bg-white" onClick={stopRecording}>
                     Stop Recording
                   </Button>
                 </div>
@@ -507,17 +446,9 @@ const InteractiveChatBox = () => {
                   <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Mic className="w-8 h-8 text-white" />
                   </div>
-                  <p className="text-slate-700 mb-2">
-                    Click to start recording
-                  </p>
-                  <p className="text-sm text-slate-500 mb-4">
-                    Speak your health question
-                  </p>
-                  <Button
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                    onClick={startRecording}
-                    disabled={isProcessingVoice}
-                  >
+                  <p className="text-slate-700 mb-2">Click to start recording</p>
+                  <p className="text-sm text-slate-500 mb-4">Speak your health question</p>
+                  <Button className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={startRecording} disabled={isProcessingVoice}>
                     Start Recording
                   </Button>
                 </div>
@@ -531,23 +462,14 @@ const InteractiveChatBox = () => {
                 <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-4 max-w-[80%]">
                   <div className="flex items-center space-x-2">
                     <TypingIndicator color="bg-white" />
-                    <span className="text-sm">
-                      Processing your voice message...
-                    </span>
+                    <span className="text-sm">Processing your voice message...</span>
                   </div>
                 </div>
               </div>
             )}
-            <div
-              ref={messagesContainerRef}
-              className="space-y-4 max-h-32 overflow-y-auto"
-            >
+            <div ref={messagesContainerRef} className="space-y-4 max-h-32 overflow-y-auto">
               {demoMessages.slice(-2).map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  content={message.content}
-                  sender={message.sender}
-                />
+                <ChatMessage key={message.id} content={message.content} sender={message.sender} />
               ))}
             </div>
           </div>
@@ -573,33 +495,21 @@ const InteractiveChatBox = () => {
         <div className="flex items-center space-x-3 text-xs text-slate-500">
           <button
             onClick={() => setMode("text")}
-            className={`flex items-center space-x-1 p-2 rounded-lg transition-colors ${
-              mode === "text"
-                ? "bg-emerald-100 text-emerald-700"
-                : "hover:bg-slate-100"
-            }`}
+            className={`flex items-center space-x-1 p-2 rounded-lg transition-colors ${mode === "text" ? "bg-emerald-100 text-emerald-700" : "hover:bg-slate-100"}`}
           >
             <MessageCircle className="w-3 h-3" />
             <span>Text</span>
           </button>
           <button
             onClick={() => setMode("image")}
-            className={`flex items-center space-x-1 p-2 rounded-lg transition-colors ${
-              mode === "image"
-                ? "bg-emerald-100 text-emerald-700"
-                : "hover:bg-slate-100"
-            }`}
+            className={`flex items-center space-x-1 p-2 rounded-lg transition-colors ${mode === "image" ? "bg-emerald-100 text-emerald-700" : "hover:bg-slate-100"}`}
           >
             <ImageIcon className="w-3 h-3" />
             <span>Image</span>
           </button>
           <button
             onClick={() => setMode("voice")}
-            className={`flex items-center space-x-1 p-2 rounded-lg transition-colors ${
-              mode === "voice"
-                ? "bg-emerald-100 text-emerald-700"
-                : "hover:bg-slate-100"
-            }`}
+            className={`flex items-center space-x-1 p-2 rounded-lg transition-colors ${mode === "voice" ? "bg-emerald-100 text-emerald-700" : "hover:bg-slate-100"}`}
           >
             <Mic className="w-3 h-3" />
             <span>Voice</span>

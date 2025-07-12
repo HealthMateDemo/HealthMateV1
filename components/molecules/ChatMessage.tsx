@@ -1,4 +1,3 @@
-import React from "react";
 import { Brain } from "lucide-react";
 import GradientIcon from "@/components/atoms/GradientIcon";
 

@@ -1,4 +1,3 @@
-import React from "react";
 import { motion } from "framer-motion";
 
 interface AnimatedCloudProps {
@@ -9,19 +8,13 @@ interface AnimatedCloudProps {
   yRange?: [number, number, number];
 }
 
-const AnimatedCloud: React.FC<AnimatedCloudProps> = ({
-  className = "",
-  delay = 0,
-  duration = 8,
-  xRange = [0, 30, 0],
-  yRange = [0, -10, 0]
-}) => {
+const AnimatedCloud: React.FC<AnimatedCloudProps> = ({ className = "", delay = 0, duration = 8, xRange = [0, 30, 0], yRange = [0, -10, 0] }) => {
   return (
     <motion.div
       className={`bg-white/40 rounded-full ${className}`}
-      animate={{ 
-        x: xRange, 
-        y: yRange 
+      animate={{
+        x: xRange,
+        y: yRange,
       }}
       transition={{
         duration,
@@ -33,4 +26,4 @@ const AnimatedCloud: React.FC<AnimatedCloudProps> = ({
   );
 };
 
-export default AnimatedCloud; 
+export default AnimatedCloud;
