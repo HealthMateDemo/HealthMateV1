@@ -15,6 +15,8 @@ import { useCallback } from "react";
 import LoadingSpinner from "../atoms/LoadingSpinner";
 import LikedMessagesList from "../molecules/LikedMessagesList";
 import ConversationDropdown from "../atoms/ConversationDropdown";
+import useShowMore from "@/hooks/useShowMore";
+import CategoryBadge from "@/components/atoms/CategoryBadge";
 
 // Types for chat functionality
 interface Message {
@@ -348,6 +350,25 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Compute only valid favorite conversation IDs
+  const validFavoriteIds = favorites.filter((fid) => conversations.some((c) => c.id === fid));
+  const {
+    displayedItems: displayedFavorites,
+    showAll: showAllFavorites,
+    showMore: showMoreFavorites,
+    showLess: showLessFavorites,
+    total: totalFavorites,
+    hasMore: hasMoreFavorites,
+  } = useShowMore(validFavoriteIds, 3);
+
+  // Helper for rendering a small category badge
+  const renderSmallCategoryBadge = (cat: string | undefined) => {
+    const c = typeof cat === "string" ? cat.trim().toLowerCase() : "";
+    if (!c) return <span className="ml-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-semibold">Default</span>;
+    if (c === "saved") return <span className="ml-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-semibold">Saved</span>;
+    return <span className="ml-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[9px] font-semibold">{c.charAt(0).toUpperCase() + c.slice(1)}</span>;
+  };
+
   return (
     <div className="fixed inset-0 bg-white z-50 flex overflow-hidden">
       {/* Left Sidebar */}
@@ -400,7 +421,10 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-medium text-slate-800 truncate">{conversation.title}</h4>
+                    <h4 className="font-medium text-slate-800 truncate flex items-center gap-2">
+                      {conversation.title}
+                      <CategoryBadge category={conversation.category} size="md" />
+                    </h4>
                     <div className="flex items-center gap-2">
                       {conversation.isSaved && <Save className="w-3 h-3 text-emerald-500" />}
                       <span className="flex items-center gap-1 ml-2">
@@ -728,10 +752,15 @@ export default function MainChatArea({ onClose, conversations, currentConversati
               <h2 className="text-lg font-semibold mb-4">Settings</h2>
               {/* Favorites section */}
               <div className="mb-6">
-                <span className="block text-xs text-slate-500 font-semibold mb-2">Favorites</span>
-                {favorites.length === 0 && <div className="text-xs text-slate-400">No favorites yet.</div>}
+                <span className="text-xs text-slate-500 font-semibold mb-2 flex items-center gap-2">
+                  Favorites
+                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold min-w-[18px] h-[18px]">
+                    {validFavoriteIds.length}
+                  </span>
+                </span>
+                {validFavoriteIds.length === 0 && <div className="text-xs text-slate-400">No favorites yet.</div>}
                 <ul className="space-y-2">
-                  {favorites
+                  {displayedFavorites
                     .map((fid) => {
                       const favConv = conversations.find((c) => c.id === fid);
                       if (!favConv) return null;
@@ -739,7 +768,10 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                         <li key={fid}>
                           <button className="w-full text-left flex items-center gap-2 px-2 py-1 rounded hover:bg-emerald-50" onClick={() => handleSelectFavorite(fid)}>
                             <HeartIcon className="w-4 h-4 fill-emerald-500 text-emerald-500 flex-shrink-0" />
-                            <span className="truncate font-medium text-slate-800">{favConv.title}</span>
+                            <span className="truncate font-medium text-slate-800 flex items-center gap-1">
+                              {favConv.title}
+                              <CategoryBadge category={favConv.category} size="sm" />
+                            </span>
                             <span className="text-xs text-slate-400 ml-auto">{favConv.updatedAt instanceof Date ? favConv.updatedAt.toLocaleDateString("en-US") : ""}</span>
                           </button>
                         </li>
@@ -747,6 +779,16 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                     })
                     .filter(Boolean)}
                 </ul>
+                {hasMoreFavorites && !showAllFavorites && (
+                  <button className="mt-2 text-xs text-emerald-600 hover:underline focus:outline-none" onClick={showMoreFavorites}>
+                    Show more
+                  </button>
+                )}
+                {hasMoreFavorites && showAllFavorites && (
+                  <button className="mt-2 text-xs text-emerald-600 hover:underline focus:outline-none" onClick={showLessFavorites}>
+                    Show less
+                  </button>
+                )}
                 {/* Liked messages preview */}
                 <LikedMessagesList conversations={conversations} aiFeedback={aiFeedback} onSelectConversation={handleSelectFavorite} />
               </div>

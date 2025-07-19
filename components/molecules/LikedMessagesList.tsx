@@ -1,5 +1,7 @@
 import React from "react";
 import { ThumbsUp } from "lucide-react";
+import { useState } from "react";
+import useShowMore from "@/hooks/useShowMore";
 
 interface Message {
   id: string;
@@ -27,15 +29,21 @@ interface LikedMessagesListProps {
 
 const LikedMessagesList: React.FC<LikedMessagesListProps> = ({ conversations, aiFeedback, onSelectConversation }) => {
   // Find liked AI messages and their parent conversation
-  const likedMessages = conversations
-    .flatMap((conv) => conv.messages.filter((m) => m.sender === "ai" && aiFeedback[m.id] === "like").map((m) => ({ ...m, conversationId: conv.id, conversationTitle: conv.title })))
-    .slice(0, 2);
+  const likedMessages = conversations.flatMap((conv) =>
+    conv.messages.filter((m) => m.sender === "ai" && aiFeedback[m.id] === "like").map((m) => ({ ...m, conversationId: conv.id, conversationTitle: conv.title })),
+  );
   if (likedMessages.length === 0) return null;
+  const { displayedItems: displayedMessages, showAll, showMore, showLess, total: totalLiked, hasMore } = useShowMore(likedMessages, 3);
   return (
     <div className="mt-4">
-      <span className="block text-xs text-slate-500 font-semibold mb-2">Liked Messages</span>
+      <span className="text-xs text-slate-500 font-semibold mb-2 flex items-center gap-2">
+        Liked Messages
+        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold min-w-[18px] h-[18px]">
+          {totalLiked}
+        </span>
+      </span>
       <ul className="space-y-1">
-        {likedMessages.map((msg) => (
+        {displayedMessages.map((msg) => (
           <li key={msg.id}>
             <button
               className="w-full text-left flex items-center gap-2 px-2 py-1 rounded hover:bg-emerald-50 transition text-emerald-700 text-xs"
@@ -49,6 +57,16 @@ const LikedMessagesList: React.FC<LikedMessagesListProps> = ({ conversations, ai
           </li>
         ))}
       </ul>
+      {hasMore && !showAll && (
+        <button className="mt-2 text-xs text-emerald-600 hover:underline focus:outline-none" onClick={showMore}>
+          Show more
+        </button>
+      )}
+      {hasMore && showAll && (
+        <button className="mt-2 text-xs text-emerald-600 hover:underline focus:outline-none" onClick={showLess}>
+          Show less
+        </button>
+      )}
     </div>
   );
 };
