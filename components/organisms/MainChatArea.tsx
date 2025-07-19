@@ -12,6 +12,7 @@ import TypingIndicator from "@/components/atoms/TypingIndicator";
 import ReactDOM from "react-dom";
 import { useRef } from "react";
 import { useCallback } from "react";
+import LoadingSpinner from "../atoms/LoadingSpinner";
 
 // Types for chat functionality
 interface Message {
@@ -160,7 +161,8 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   // In handleSendMessage, after updating conversations, set currentConversation to the updated object from conversations
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !currentConversation) return;
+    if (!inputMessage.trim() || !currentConversation || isLoading) return;
+    setIsLoading(true);
 
     const userMessage: Message = {
       id: generateId(),
@@ -301,6 +303,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   // In handleWebSocketMessage, after updating conversations, set currentConversation to the updated object from conversations
   const handleWebSocketMessage = (message: WebSocketMessage) => {
     if (message.type === "message" && message.sender === "ai" && message.conversationId) {
+      setIsLoading(false);
       setConversations((prev) => {
         // Always use the latest messages array from state
         const updated = prev.map((conv) => {
@@ -331,6 +334,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     } else if (message.type === "typing") {
       setIsTyping(true);
     } else if (message.type === "error") {
+      setIsLoading(false);
       console.error("WebSocket error:", message.content);
       setIsTyping(false);
     }
@@ -341,8 +345,10 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     window.location.reload();
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   return (
-    <div className="fixed inset-0 bg-white z-50 flex">
+    <div className="fixed inset-0 bg-white z-50 flex overflow-hidden">
       {/* Left Sidebar */}
       <div className="w-80 bg-slate-50 border-r border-slate-200 flex flex-col">
         {/* Header */}
@@ -653,7 +659,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
               <div className="flex justify-start">
                 <div className="bg-slate-100 text-slate-800 rounded-2xl p-4">
                   <div className="flex items-center space-x-2">
-                    <TypingIndicator color="bg-slate-400" />
+                    <TypingIndicator dotColorClass="bg-slate-400" />
                     <span className="text-sm text-slate-500">AI is typing...</span>
                   </div>
                 </div>
@@ -672,14 +678,15 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                 onKeyPress={handleKeyPress}
                 placeholder="Type your health question..."
                 className="min-h-[44px] resize-none"
+                disabled={isLoading}
               />
             </div>
             <Button
               onClick={handleSendMessage}
-              disabled={!inputMessage.trim()}
+              disabled={!inputMessage.trim() || isLoading}
               className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
             >
-              <Send className="w-4 h-4" />
+              {isLoading ? <LoadingSpinner /> : <Send className="w-4 h-4" />}
             </Button>
           </div>
         </div>

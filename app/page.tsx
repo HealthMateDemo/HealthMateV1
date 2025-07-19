@@ -12,6 +12,7 @@ import Footer from "@/components/organisms/Footer";
 import AnimatedRoadmap from "@/components/organisms/AnimatedRoadmap";
 import MainChatArea from "@/components/organisms/MainChatArea";
 import FeaturesSection from "@/components/organisms/FeaturesSection";
+import useBodyScrollLock from "@/hooks/useBodyScrollLock";
 
 // Types for chat functionality
 interface Message {
@@ -98,6 +99,8 @@ export default function LandingPage() {
     };
     localStorage.setItem("zenhealth-chat-state", JSON.stringify(stateToSave));
   }, [showChat, conversations, currentConversation]);
+
+  useBodyScrollLock(showChat);
 
   const handleStartJourney = () => {
     setShowChat(true);

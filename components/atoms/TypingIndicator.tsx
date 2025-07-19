@@ -1,17 +1,38 @@
-interface TypingIndicatorProps {
-  color?: string;
-  size?: "sm" | "md";
+import React from "react";
+
+export interface TypingIndicatorProps {
   className?: string;
+  dotColorClass?: string;
+  size?: number;
 }
 
-const TypingIndicator: React.FC<TypingIndicatorProps> = ({ color = "bg-slate-400", size = "md", className = "" }) => {
-  const dotSize = size === "sm" ? "w-1.5 h-1.5" : "w-2 h-2";
-
+const TypingIndicator: React.FC<TypingIndicatorProps> = ({ className = "", dotColorClass = "bg-slate-400", size = 8 }) => {
   return (
-    <div className={`flex space-x-1 ${className}`}>
-      <div className={`${dotSize} ${color} rounded-full animate-bounce`}></div>
-      <div className={`${dotSize} ${color} rounded-full animate-bounce`} style={{ animationDelay: "0.1s" }}></div>
-      <div className={`${dotSize} ${color} rounded-full animate-bounce`} style={{ animationDelay: "0.2s" }}></div>
+    <div className={`flex items-center space-x-1 ${className}`} aria-label="AI is typing">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className={`inline-block rounded-full ${dotColorClass}`}
+          style={{
+            width: size,
+            height: size,
+            animation: `bounce 1s infinite`,
+            animationDelay: `${i * 0.2}s`,
+          }}
+        />
+      ))}
+      <style jsx>{`
+        @keyframes bounce {
+          0%,
+          80%,
+          100% {
+            transform: translateY(0);
+          }
+          40% {
+            transform: translateY(-8px);
+          }
+        }
+      `}</style>
     </div>
   );
 };
