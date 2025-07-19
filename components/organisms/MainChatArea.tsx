@@ -13,6 +13,8 @@ import ReactDOM from "react-dom";
 import { useRef } from "react";
 import { useCallback } from "react";
 import LoadingSpinner from "../atoms/LoadingSpinner";
+import LikedMessagesList from "../molecules/LikedMessagesList";
+import ConversationDropdown from "../atoms/ConversationDropdown";
 
 // Types for chat functionality
 interface Message {
@@ -208,8 +210,11 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    setConversations((prev) => [newConversation, ...prev]);
-    setCurrentConversation(newConversation);
+    setConversations((prev) => {
+      const updated = [newConversation, ...prev];
+      setCurrentConversation(updated[0]);
+      return updated;
+    });
   };
 
   const saveConversation = () => {
@@ -303,9 +308,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   // In handleWebSocketMessage, after updating conversations, set currentConversation to the updated object from conversations
   const handleWebSocketMessage = (message: WebSocketMessage) => {
     if (message.type === "message" && message.sender === "ai" && message.conversationId) {
-      setIsLoading(false);
       setConversations((prev) => {
-        // Always use the latest messages array from state
         const updated = prev.map((conv) => {
           if (conv.id === message.conversationId) {
             const aiMessage: Message = {
@@ -323,14 +326,12 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           }
           return conv;
         });
-        // If the user is viewing this conversation, update currentConversation as well
-        if (currentConversation?.id === message.conversationId) {
-          const updatedCurrent = updated.find((c) => c.id === message.conversationId) || null;
-          setCurrentConversation(updatedCurrent);
-        }
+        // Always set currentConversation to the updated object from the new array
+        setCurrentConversation(updated.find((c) => c.id === message.conversationId) || null);
         return updated;
       });
       setIsTyping(false);
+      setIsLoading(false);
     } else if (message.type === "typing") {
       setIsTyping(true);
     } else if (message.type === "error") {
@@ -410,7 +411,15 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-slate-500">{conversation.messages.length} messages</p>
+                  <p className="text-xs text-slate-500 flex items-center gap-2">
+                    {conversation.messages.length} messages
+                    <span className="flex items-center gap-1 ml-2">
+                      <Brain className="w-3 h-3 text-slate-500" />
+                      <span className="text-xs text-slate-700">{conversation.messages.filter((m) => m.sender === "ai").length}</span>
+                      <MessageCircle className="w-3 h-3 text-slate-500 ml-2" />
+                      <span className="text-xs text-slate-700">{conversation.messages.filter((m) => m.sender === "user").length}</span>
+                    </span>
+                  </p>
                   <p className="text-xs text-slate-400">{conversation.updatedAt instanceof Date ? conversation.updatedAt.toLocaleDateString("en-US") : ""}</p>
                   {/* Heart (favorite) icon at bottom right */}
                   <button
@@ -594,9 +603,17 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                   )}
                 </div>
               )}
-              <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-700">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
+              <ConversationDropdown
+                onDelete={() => {
+                  if (!currentConversation) return;
+                  setConversations((prev) => {
+                    const updated = prev.filter((c) => c.id !== currentConversation.id);
+                    setCurrentConversation(updated[0] || null);
+                    if (updated.length === 0) onClose();
+                    return updated;
+                  });
+                }}
+              />
             </div>
           </div>
         </div>
@@ -730,6 +747,8 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                     })
                     .filter(Boolean)}
                 </ul>
+                {/* Liked messages preview */}
+                <LikedMessagesList conversations={conversations} aiFeedback={aiFeedback} onSelectConversation={handleSelectFavorite} />
               </div>
               <div className="mt-6">
                 <span className="text-xs text-slate-400">Danger Zone</span>
