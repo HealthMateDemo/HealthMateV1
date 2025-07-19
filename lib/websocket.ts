@@ -17,6 +17,10 @@ export class WebSocketService {
   constructor(private url: string = "ws://localhost:3001") {}
 
   connect() {
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+      // Already connected or connecting
+      return;
+    }
     try {
       this.ws = new WebSocket(this.url);
 

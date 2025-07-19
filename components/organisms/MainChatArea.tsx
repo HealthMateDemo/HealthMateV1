@@ -146,7 +146,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     const unsubscribe = websocketService.onMessage(handleWebSocketMessage);
     return () => {
       unsubscribe(); // Remove the handler on unmount
-      websocketService.disconnect();
+      // Removed websocketService.disconnect() to keep the connection alive
     };
   }, []);
 
