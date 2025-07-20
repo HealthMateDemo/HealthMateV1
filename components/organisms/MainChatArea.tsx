@@ -17,6 +17,12 @@ import LikedMessagesList from "../molecules/LikedMessagesList";
 import ConversationDropdown from "../atoms/ConversationDropdown";
 import useShowMore from "@/hooks/useShowMore";
 import CategoryBadge from "@/components/atoms/CategoryBadge";
+import ChatSidebarHeader from "../molecules/ChatSidebarHeader";
+import ChatSidebarSearchBar from "../atoms/ChatSidebarSearchBar";
+import ConversationList from "./ConversationList";
+import CategoryFilterSection from "../molecules/CategoryFilterSection";
+import CategoryListSection from "../molecules/CategoryListSection";
+import CategoryCreate from "../atoms/CategoryCreate";
 
 // Types for chat functionality
 interface Message {
@@ -374,173 +380,47 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       {/* Left Sidebar */}
       <div className="w-80 bg-slate-50 border-r border-slate-200 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <GradientIcon icon={Heart} size="md" />
-              <span className="font-semibold text-slate-800">ZenHealth AI</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button ref={settingsButtonRef} onClick={() => setSettingsOpen((v) => !v)} className="text-slate-500 hover:text-slate-700 p-1 rounded-full focus:outline-none">
-                <Settings className="w-5 h-5" />
-              </button>
-              <Button variant="ghost" size="sm" onClick={onClose} className="text-slate-500 hover:text-slate-700">
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          <Button onClick={createNewConversation} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            New Conversation
-          </Button>
-        </div>
+        <ChatSidebarHeader
+          onClose={onClose}
+          onToggleSettings={() => setSettingsOpen((v) => !v)}
+          settingsOpen={settingsOpen}
+          settingsButtonRef={settingsButtonRef}
+          createNewConversation={createNewConversation}
+        />
 
         {/* Search */}
-        <div className="p-4 border-b border-slate-200">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input placeholder="Search conversations..." className="pl-10 bg-white border-slate-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          </div>
-        </div>
+        <ChatSidebarSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
         {/* Conversations List */}
         <ScrollArea className="flex-1">
-          <div className="p-4 space-y-2">
-            {filteredConversations.map((conversation, idx) => {
-              // Calculate like/dislike counts for this conversation
-              const aiMsgs = conversation.messages.filter((m) => m.sender === "ai");
-              const likeCount = aiMsgs.filter((m) => aiFeedback[m.id] === "like").length;
-              const dislikeCount = aiMsgs.filter((m) => aiFeedback[m.id] === "dislike").length;
-              return (
-                <div
-                  key={typeof conversation.id === "string" && conversation.id.trim().length > 0 ? conversation.id : `conv-fallback-${idx}`}
-                  onClick={() => handleSelectConversation(conversation.id)}
-                  className={`relative p-3 rounded-lg cursor-pointer transition-colors ${
-                    currentConversation?.id === conversation.id ? "bg-emerald-100 border border-emerald-200" : "hover:bg-slate-100"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-medium text-slate-800 truncate flex items-center gap-2">
-                      {conversation.title}
-                      <CategoryBadge category={conversation.category} size="md" />
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      {conversation.isSaved && <Save className="w-3 h-3 text-emerald-500" />}
-                      <span className="flex items-center gap-1 ml-2">
-                        <ThumbsUp className="w-3 h-3 text-emerald-500" />
-                        <span className="text-xs text-emerald-700 font-semibold">{likeCount}</span>
-                        <ThumbsDown className="w-3 h-3 text-red-500 ml-1" />
-                        <span className="text-xs text-red-700 font-semibold">{dislikeCount}</span>
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 flex items-center gap-2">
-                    {conversation.messages.length} messages
-                    <span className="flex items-center gap-1 ml-2">
-                      <Brain className="w-3 h-3 text-slate-500" />
-                      <span className="text-xs text-slate-700">{conversation.messages.filter((m) => m.sender === "ai").length}</span>
-                      <MessageCircle className="w-3 h-3 text-slate-500 ml-2" />
-                      <span className="text-xs text-slate-700">{conversation.messages.filter((m) => m.sender === "user").length}</span>
-                    </span>
-                  </p>
-                  <p className="text-xs text-slate-400">{conversation.updatedAt instanceof Date ? conversation.updatedAt.toLocaleDateString("en-US") : ""}</p>
-                  {/* Heart (favorite) icon at bottom right */}
-                  <button
-                    className="absolute bottom-2 right-2 p-1 rounded-full bg-white/80 hover:bg-emerald-100 transition"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(conversation.id);
-                    }}
-                    aria-label={favorites.includes(conversation.id) ? "Unfavorite" : "Favorite"}
-                  >
-                    <HeartIcon className={`w-4 h-4 ${favorites.includes(conversation.id) ? "fill-emerald-500 text-emerald-500" : "text-slate-400"}`} />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <ConversationList
+            filteredConversations={filteredConversations}
+            currentConversation={currentConversation}
+            handleSelectConversation={handleSelectConversation}
+            aiFeedback={aiFeedback}
+            favorites={favorites}
+            toggleFavorite={toggleFavorite}
+          />
         </ScrollArea>
 
         {/* Categories */}
         <div className="p-4 border-t border-slate-200">
           <h3 className="font-medium text-slate-700 mb-3">Categories</h3>
+
           {/* Create new category at the top */}
-          <div className="flex items-center gap-2 mb-4">
-            <input
-              type="text"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="Create category..."
-              className="border rounded px-2 py-1 text-xs"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddCategory();
-              }}
-            />
-            <button className="bg-emerald-500 text-white px-2 py-1 rounded text-xs" onClick={handleAddCategory} disabled={!newCategory.trim()}>
-              Add
-            </button>
-          </div>
+          <CategoryCreate newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory} />
+
           {/* Filter by Category section */}
-          <div className="mb-2">
-            <span className="block text-xs text-slate-500 font-semibold mb-1">Filter by Category</span>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {["all", "saved", ...userCategories].map((cat) => (
-                <div key={cat} className="relative flex items-center">
-                  <button
-                    className={`px-1.5 py-0.5 rounded text-[11px] flex items-center gap-1 ${categoryFilter === cat ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
-                    style={{ minHeight: 0, minWidth: 0 }}
-                    onClick={() => setCategoryFilter(cat)}
-                  >
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    {defaultCategories.includes(cat) ? (
-                      <span className="ml-1 px-1 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-semibold">Default</span>
-                    ) : (
-                      <span className="ml-1 px-1 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[9px] font-semibold">Created</span>
-                    )}
-                  </button>
-                  {/* Show X for user-created categories only in filter badges */}
-                  {!defaultCategories.includes(cat) && (
-                    <button
-                      className="absolute -right-2 -top-2 bg-white rounded-full p-0.5 hover:bg-red-100"
-                      title="Remove category"
-                      onClick={() => handleRemoveCategory(cat)}
-                      tabIndex={-1}
-                      style={{ lineHeight: 0 }}
-                    >
-                      <X className="w-3 h-3 text-red-500" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <CategoryFilterSection
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            userCategories={userCategories}
+            defaultCategories={defaultCategories}
+            handleRemoveCategory={handleRemoveCategory}
+          />
+
           {/* Category List section */}
-          <div className="mt-4">
-            <span className="block text-xs text-slate-500 font-semibold mb-1">Category List</span>
-            <div className="space-y-1 overflow-y-auto max-h-48 pr-1">
-              <div className="flex items-center space-x-1 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
-                <FolderOpen className="w-3 h-3" />
-                <span>All Conversations</span>
-                <span className="ml-1 px-1 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-semibold">Default</span>
-              </div>
-              <div className="flex items-center space-x-1 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
-                <Save className="w-3 h-3" />
-                <span>Saved</span>
-                <span className="ml-1 px-1 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-semibold">Default</span>
-              </div>
-              {/* User-created categories (no X button here) */}
-              {userCategories
-                .filter((cat) => !defaultCategories.includes(cat))
-                .map((cat) => (
-                  <div key={cat} className="flex items-center space-x-1 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
-                    <MessageCircle className="w-3 h-3" />
-                    <span>{cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
-                    <span className="ml-1 px-1 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[9px] font-semibold">Created</span>
-                  </div>
-                ))}
-            </div>
-          </div>
+          <CategoryListSection userCategories={userCategories} defaultCategories={defaultCategories} />
         </div>
       </div>
 
@@ -617,14 +497,12 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                     return <span className="ml-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold">{cat.charAt(0).toUpperCase() + cat.slice(1)}</span>;
                   })()}
                   {/* Like/Dislike counts */}
-                  {(likeCount > 0 || dislikeCount > 0) && (
-                    <span className="flex items-center gap-1 ml-2">
-                      <ThumbsUp className="w-4 h-4 text-emerald-500" />
-                      <span className="text-xs text-emerald-700 font-semibold">{likeCount}</span>
-                      <ThumbsDown className="w-4 h-4 text-red-500 ml-2" />
-                      <span className="text-xs text-red-700 font-semibold">{dislikeCount}</span>
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1 ml-2">
+                    <ThumbsUp className="w-4 h-4 text-emerald-500" />
+                    <span className="text-xs text-emerald-700 font-semibold">{likeCount}</span>
+                    <ThumbsDown className="w-4 h-4 text-red-500 ml-2" />
+                    <span className="text-xs text-red-700 font-semibold">{dislikeCount}</span>
+                  </span>
                 </div>
               )}
               <ConversationDropdown
