@@ -1,7 +1,10 @@
 {
   "editor.tabSize": 2,
   "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": ["source.fixAll.eslint"],
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always",
+    "source.fixAll": "always"
+  },
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "prettier.requireConfig": true,
@@ -10,5 +13,7 @@
   "typescript.updateImportsOnFileMove.enabled": "always",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.preferences.importModuleSpecifierEnding": "auto"
+  "typescript.preferences.importModuleSpecifierEnding": "auto",
+  "editor.showUnused": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true
 }

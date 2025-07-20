@@ -1,49 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
-import { MessageCircle, Brain, BookOpen, CheckCircle } from "lucide-react";
 import GradientIcon from "@/components/atoms/GradientIcon";
+import { steps } from "@/lib/RoadMapConst";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 interface AnimatedRoadmapProps {
   fadeInUp: any;
   staggerContainer: any;
 }
 
-const steps = [
-  {
-    step: "01",
-    title: "Share Your Health Concerns",
-    description: "Express yourself naturally through text, voice messages, or by uploading images of symptoms or medical documents.",
-    features: ["Natural language processing", "Voice recognition", "Image analysis", "Medical document scanning"],
-    icon: MessageCircle,
-    delay: 0.2,
-  },
-  {
-    step: "02",
-    title: "AI Analysis & Personalized Guidance",
-    description: "Our advanced AI, powered by sundhed.dk's medical knowledge base, analyzes your input and provides evidence-based recommendations.",
-    features: ["Evidence-based analysis", "Personalized recommendations", "Medical knowledge integration", "Instant response"],
-    icon: Brain,
-    delay: 0.4,
-  },
-  {
-    step: "03",
-    title: "Follow Your Wellness Plan",
-    description: "Receive actionable steps, resources, and ongoing support tailored to your specific health and wellness needs.",
-    features: ["Actionable wellness plans", "Resource recommendations", "Progress tracking", "24/7 support"],
-    icon: BookOpen,
-    delay: 0.6,
-  },
-  {
-    step: "04",
-    title: "Track Your Progress",
-    description: "Monitor your improvements and adjust your plan with ongoing AI support.",
-    features: ["Progress analytics", "Goal adjustments", "Personalized feedback", "Continuous improvement"],
-    icon: CheckCircle,
-    delay: 0.8,
-  },
-];
-
-const AnimatedRoadmap: React.FC<AnimatedRoadmapProps> = ({ fadeInUp, staggerContainer }) => {
+const AnimatedRoadmap: React.FC<AnimatedRoadmapProps> = ({}) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start end", "end start"] });
   // Animate the line height from 0% to 100% as the section scrolls into view
@@ -70,7 +35,7 @@ const AnimatedRoadmap: React.FC<AnimatedRoadmapProps> = ({ fadeInUp, staggerCont
   );
 };
 
-function RoadmapStep({ item, index }: { item: (typeof steps)[0]; index: number }) {
+function RoadmapStep({ item }: { item: (typeof steps)[0]; index: number }) {
   const iconRef = useRef<HTMLDivElement>(null);
   const inView = useInView(iconRef, { once: true, margin: "-100px" });
   const [animateBorder, setAnimateBorder] = useState(false);

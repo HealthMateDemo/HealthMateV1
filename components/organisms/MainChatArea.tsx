@@ -1,30 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Brain, Send, User, ThumbsUp, ThumbsDown, Heart as HeartIcon } from "lucide-react";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { websocketService, WebSocketMessage } from "@/lib/websocket";
 import GradientIcon from "@/components/atoms/GradientIcon";
-import TypingIndicator from "@/components/atoms/TypingIndicator";
-import ReactDOM from "react-dom";
-import { useRef } from "react";
-import { useCallback } from "react";
-import LoadingSpinner from "../atoms/LoadingSpinner";
-import LikedMessagesList from "../molecules/LikedMessagesList";
-import ConversationDropdown from "../atoms/ConversationDropdown";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import useShowMore from "@/hooks/useShowMore";
-import CategoryBadge from "@/components/atoms/CategoryBadge";
-import ChatSidebarHeader from "../molecules/ChatSidebarHeader";
-import ChatSidebarSearchBar from "../atoms/ChatSidebarSearchBar";
-import ConversationList from "./ConversationList";
-import CategoryFilterSection from "../molecules/CategoryFilterSection";
-import CategoryListSection from "../molecules/CategoryListSection";
+import { WebSocketMessage, websocketService } from "@/lib/websocket";
+import { Brain, Heart as HeartIcon, ThumbsDown, ThumbsUp } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CategoryCreate from "../atoms/CategoryCreate";
 import ChatInput from "../atoms/ChatInput";
+import ChatSidebarSearchBar from "../atoms/ChatSidebarSearchBar";
+import ConversationDropdown from "../atoms/ConversationDropdown";
+import CategoryFilterSection from "../molecules/CategoryFilterSection";
+import CategoryListSection from "../molecules/CategoryListSection";
+import ChatSidebarHeader from "../molecules/ChatSidebarHeader";
+import ConversationList from "./ConversationList";
 import MessageArea from "./MessageArea";
+import SettingsPortal from "./SettingsPortal";
 
 // Types for chat functionality
 interface Message {
@@ -483,78 +474,21 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       </div>
 
       {/* Settings Portal Dropdown */}
-      {settingsOpen &&
-        typeof window !== "undefined" &&
-        ReactDOM.createPortal(
-          <div className="fixed inset-0 z-50" onClick={() => setSettingsOpen(false)} style={{ pointerEvents: "auto" }}>
-            <div
-              className="absolute bg-white rounded-2xl shadow-xl p-6 w-80 transition-all duration-300 ease-out"
-              style={{
-                top: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().bottom + 8 : 80,
-                left: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().left : 80,
-                opacity: settingsOpen ? 1 : 0,
-                transform: settingsOpen ? "scale(1)" : "scale(0.95)",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-lg font-semibold mb-4 border-b border-slate-200 pb-2 text-center">Overview</h2>
-              {/* Favorites section */}
-              <div className="mb-6">
-                <span className="text-xs text-slate-500 font-semibold mb-2 flex items-center gap-2">
-                  Favorites
-                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold min-w-[18px] h-[18px]">
-                    {validFavoriteIds.length}
-                  </span>
-                </span>
-                {validFavoriteIds.length === 0 && <div className="text-xs text-slate-400">No favorites yet.</div>}
-                <ul className="space-y-2">
-                  {displayedFavorites
-                    .map((fid) => {
-                      const favConv = conversations.find((c) => c.id === fid);
-                      if (!favConv) return null;
-                      return (
-                        <li key={fid}>
-                          <button className="w-full text-left flex items-center gap-2 px-2 py-1 rounded hover:bg-emerald-50" onClick={() => handleSelectFavorite(fid)}>
-                            <HeartIcon className="w-4 h-4 fill-emerald-500 text-emerald-500 flex-shrink-0" />
-                            <span className="truncate font-medium text-slate-800 flex text-xs items-center gap-1">
-                              {favConv.title}
-                              <CategoryBadge category={favConv.category} size="sm" />
-                            </span>
-                            <span className="text-xs text-slate-400 ml-auto">{favConv.updatedAt instanceof Date ? favConv.updatedAt.toLocaleDateString("en-US") : ""}</span>
-                          </button>
-                        </li>
-                      );
-                    })
-                    .filter(Boolean)}
-                </ul>
-                {hasMoreFavorites && !showAllFavorites && (
-                  <button className="mt-2 text-xs text-emerald-600 hover:underline focus:outline-none" onClick={showMoreFavorites}>
-                    Show more
-                  </button>
-                )}
-                {hasMoreFavorites && showAllFavorites && (
-                  <button className="mt-2 text-xs text-emerald-600 hover:underline focus:outline-none" onClick={showLessFavorites}>
-                    Show less
-                  </button>
-                )}
-                {/* Liked messages preview */}
-                <LikedMessagesList conversations={conversations} aiFeedback={aiFeedback} onSelectConversation={handleSelectFavorite} />
-              </div>
-              <div className="mt-6">
-                <span className="text-xs text-slate-400">Danger Zone</span>
-                <button
-                  onClick={handleResetAll}
-                  className="w-full mt-2 px-3 py-2 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition"
-                  title="Clear all conversations and messages"
-                >
-                  Reset All
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+      <SettingsPortal
+        settingsOpen={settingsOpen}
+        setSettingsOpen={setSettingsOpen}
+        settingsButtonRef={settingsButtonRef}
+        validFavoriteIds={validFavoriteIds}
+        displayedFavorites={displayedFavorites}
+        conversations={conversations}
+        handleSelectFavorite={handleSelectFavorite}
+        hasMoreFavorites={hasMoreFavorites}
+        showAllFavorites={showAllFavorites}
+        showMoreFavorites={showMoreFavorites}
+        showLessFavorites={showLessFavorites}
+        aiFeedback={aiFeedback}
+        handleResetAll={handleResetAll}
+      />
     </div>
   );
 }

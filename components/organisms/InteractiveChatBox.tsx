@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ImageIcon, Brain, Sparkles, Send, Mic, MessageCircle } from "lucide-react";
-import { motion } from "framer-motion";
-import ChatMessage from "@/components/molecules/ChatMessage";
 import GradientIcon from "@/components/atoms/GradientIcon";
 import TypingIndicator from "@/components/atoms/TypingIndicator";
+import ChatMessage from "@/components/molecules/ChatMessage";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { Brain, ImageIcon, MessageCircle, Mic, Send, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 const InteractiveChatBox = () => {
   const [mode, setMode] = useState<"text" | "image" | "voice">("text");
@@ -363,7 +363,7 @@ const InteractiveChatBox = () => {
                 </div>
                 <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-4 max-w-[80%]">
                   <div className="flex items-center space-x-2">
-                    <TypingIndicator color="bg-white" />
+                    <TypingIndicator dotColorClass="bg-white" />
                     <span className="text-sm">Analyzing your image...</span>
                   </div>
                 </div>
@@ -461,7 +461,7 @@ const InteractiveChatBox = () => {
                 </div>
                 <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-4 max-w-[80%]">
                   <div className="flex items-center space-x-2">
-                    <TypingIndicator color="bg-white" />
+                    <TypingIndicator dotColorClass="bg-white" />
                     <span className="text-sm">Processing your voice message...</span>
                   </div>
                 </div>
