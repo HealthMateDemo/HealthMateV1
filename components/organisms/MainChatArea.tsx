@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Brain, Heart, X, Plus, Search, MoreVertical, Send, Save, FolderOpen, Settings, MessageCircle, User, ThumbsUp, ThumbsDown, Heart as HeartIcon } from "lucide-react";
+import { Brain, Send, User, ThumbsUp, ThumbsDown, Heart as HeartIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,8 @@ import ConversationList from "./ConversationList";
 import CategoryFilterSection from "../molecules/CategoryFilterSection";
 import CategoryListSection from "../molecules/CategoryListSection";
 import CategoryCreate from "../atoms/CategoryCreate";
+import ChatInput from "../atoms/ChatInput";
+import MessageArea from "./MessageArea";
 
 // Types for chat functionality
 interface Message {
@@ -54,11 +56,9 @@ interface MainChatAreaProps {
 export default function MainChatArea({ onClose, conversations, currentConversation, setConversations, setCurrentConversation }: MainChatAreaProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [websocketError, setWebsocketError] = useState<string | null>(null);
 
   // Add state for category filter
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [categoryInput, setCategoryInput] = useState("");
 
   // Add state for search functionality
   const [searchTerm, setSearchTerm] = useState("");
@@ -213,7 +213,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   const createNewConversation = () => {
     const newConversation: Conversation = {
       id: generateId(),
-      title: "New Wellness Session",
+      title: "New Chat",
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -225,22 +225,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     });
   };
 
-  const saveConversation = () => {
-    if (!currentConversation) return;
-    const updatedConversation = { ...currentConversation, isSaved: true };
-    setCurrentConversation(updatedConversation);
-    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
-  };
-
   const generateId = () => (window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now().toString());
-
-  // Add a function to update the category of the current conversation
-  const updateConversationCategory = (category: string) => {
-    if (!currentConversation) return;
-    const updatedConversation = { ...currentConversation, category };
-    setCurrentConversation(updatedConversation);
-    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
-  };
 
   // Update conversation title
   const handleTitleEdit = () => {
@@ -250,9 +235,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
     setIsEditingTitle(false);
   };
-
-  // Helper to get unique, trimmed, case-insensitive categories (no nulls)
-  const categories = [...userCategories];
 
   // Add a new category
   const handleAddCategory = () => {
@@ -293,25 +275,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       searchTerm.trim() === "" || c.title.toLowerCase().includes(searchTerm.toLowerCase()) || c.messages.some((m) => m.content.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
-
-  console.log(
-    "Conversation keys:",
-    filteredConversations.map((c, idx) => (typeof c.id === "string" && c.id.trim().length > 0 ? c.id : `conv-fallback-${idx}`)),
-  );
-  if (currentConversation) {
-    console.log(
-      "Message keys:",
-      currentConversation.messages.map((m, idx) => (typeof m.id === "string" && m.id.trim().length > 0 ? m.id : `msg-fallback-${idx}`)),
-    );
-  }
-
-  // DEBUG: Log all conversation categories and their values
-  console.log(
-    "All conversation categories:",
-    conversations.map((c) => ({ id: c.id, category: c.category })),
-  );
-
-  const activeConversation = conversations.find((conv) => conv.id === currentConversation?.id) || currentConversation;
 
   // In handleWebSocketMessage, after updating conversations, set currentConversation to the updated object from conversations
   const handleWebSocketMessage = (message: WebSocketMessage) => {
@@ -366,14 +329,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     total: totalFavorites,
     hasMore: hasMoreFavorites,
   } = useShowMore(validFavoriteIds, 3);
-
-  // Helper for rendering a small category badge
-  const renderSmallCategoryBadge = (cat: string | undefined) => {
-    const c = typeof cat === "string" ? cat.trim().toLowerCase() : "";
-    if (!c) return <span className="ml-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-semibold">Default</span>;
-    if (c === "saved") return <span className="ml-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-semibold">Saved</span>;
-    return <span className="ml-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[9px] font-semibold">{c.charAt(0).toUpperCase() + c.slice(1)}</span>;
-  };
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex overflow-hidden">
@@ -521,94 +476,10 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         </div>
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
-            {currentConversation?.messages.map((message, idx) => (
-              <div
-                key={typeof message.id === "string" && message.id.trim().length > 0 ? message.id : `msg-fallback-${idx}`}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} items-center`}
-              >
-                {message.sender === "ai" ? (
-                  <>
-                    <span className="mr-2 flex items-center justify-center self-center">
-                      <Brain className="w-5 h-5 text-emerald-400" />
-                    </span>
-                    <div className="flex flex-col">
-                      <div className={`max-w-[70vw] rounded-2xl p-4 bg-slate-100 text-slate-800`}>
-                        <p className="text-sm">{message.content}</p>
-                        <p className="text-xs mt-2 text-slate-500">
-                          {format(message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp), "yyyy-MM-dd HH:mm:ss")}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 mt-2" style={{ marginLeft: 0 }}>
-                        <button
-                          className={`p-1 rounded-full ${aiFeedback[message.id] === "like" ? "bg-emerald-100 text-emerald-600" : "text-slate-400 hover:text-emerald-500"}`}
-                          onClick={() => handleFeedback(message.id, "like")}
-                          aria-label="Like"
-                        >
-                          <ThumbsUp className="w-4 h-4" />
-                        </button>
-                        <button
-                          className={`p-1 rounded-full ${aiFeedback[message.id] === "dislike" ? "bg-red-100 text-red-600" : "text-slate-400 hover:text-red-500"}`}
-                          onClick={() => handleFeedback(message.id, "dislike")}
-                          aria-label="Dislike"
-                        >
-                          <ThumbsDown className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className={`max-w-[70%] rounded-2xl p-4 bg-emerald-500 text-white`}>
-                      <p className="text-sm">{message.content}</p>
-                      <p className="text-xs mt-2 text-emerald-100">
-                        {format(message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp), "yyyy-MM-dd HH:mm:ss")}
-                      </p>
-                    </div>
-                    <span className="ml-2 flex items-center justify-center self-center">
-                      <User className="w-5 h-5 text-white bg-emerald-500 rounded-full p-0.5" />
-                    </span>
-                  </>
-                )}
-              </div>
-            ))}
-
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-slate-100 text-slate-800 rounded-2xl p-4">
-                  <div className="flex items-center space-x-2">
-                    <TypingIndicator dotColorClass="bg-slate-400" />
-                    <span className="text-sm text-slate-500">AI is typing...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+        <MessageArea currentConversation={currentConversation} aiFeedback={aiFeedback} handleFeedback={handleFeedback} isTyping={isTyping} />
 
         {/* Input Area */}
-        <div className="p-4 border-t border-slate-200 bg-white">
-          <div className="flex items-end space-x-2">
-            <div className="flex-1">
-              <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your health question..."
-                className="min-h-[44px] resize-none"
-                disabled={isLoading}
-              />
-            </div>
-            <Button
-              onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isLoading}
-              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
-            >
-              {isLoading ? <LoadingSpinner /> : <Send className="w-4 h-4" />}
-            </Button>
-          </div>
-        </div>
+        <ChatInput inputMessage={inputMessage} setInputMessage={setInputMessage} handleSendMessage={handleSendMessage} isLoading={isLoading} />
       </div>
 
       {/* Settings Portal Dropdown */}
@@ -617,7 +488,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         ReactDOM.createPortal(
           <div className="fixed inset-0 z-50" onClick={() => setSettingsOpen(false)} style={{ pointerEvents: "auto" }}>
             <div
-              className="absolute bg-white rounded-2xl shadow-xl p-6 w-64 transition-all duration-300 ease-out"
+              className="absolute bg-white rounded-2xl shadow-xl p-6 w-80 transition-all duration-300 ease-out"
               style={{
                 top: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().bottom + 8 : 80,
                 left: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().left : 80,
@@ -627,7 +498,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-lg font-semibold mb-4">Settings</h2>
+              <h2 className="text-lg font-semibold mb-4 border-b border-slate-200 pb-2 text-center">Overview</h2>
               {/* Favorites section */}
               <div className="mb-6">
                 <span className="text-xs text-slate-500 font-semibold mb-2 flex items-center gap-2">
@@ -646,7 +517,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
                         <li key={fid}>
                           <button className="w-full text-left flex items-center gap-2 px-2 py-1 rounded hover:bg-emerald-50" onClick={() => handleSelectFavorite(fid)}>
                             <HeartIcon className="w-4 h-4 fill-emerald-500 text-emerald-500 flex-shrink-0" />
-                            <span className="truncate font-medium text-slate-800 flex items-center gap-1">
+                            <span className="truncate font-medium text-slate-800 flex text-xs items-center gap-1">
                               {favConv.title}
                               <CategoryBadge category={favConv.category} size="sm" />
                             </span>

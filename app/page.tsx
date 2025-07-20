@@ -108,7 +108,7 @@ export default function LandingPage() {
     if (!currentConversation) {
       const newConversation: Conversation = {
         id: generateId(),
-        title: "New Wellness Session",
+        title: "New Chat",
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date(),

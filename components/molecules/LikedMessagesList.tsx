@@ -51,7 +51,7 @@ const LikedMessagesList: React.FC<LikedMessagesListProps> = ({ conversations, ai
               title={msg.conversationTitle}
             >
               <ThumbsUp className="w-4 h-4 text-emerald-500" />
-              <span className="truncate max-w-[120px]">{msg.content.length > 40 ? msg.content.slice(0, 40) + "..." : msg.content}</span>
+              <span className="truncate max-w-[140px]">{msg.content.length > 40 ? msg.content.slice(0, 40) + "..." : msg.content}</span>
               <span className="ml-auto text-slate-400">{msg.conversationTitle}</span>
             </button>
           </li>
