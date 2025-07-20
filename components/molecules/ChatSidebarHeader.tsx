@@ -1,7 +1,7 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
 import GradientIcon from "@/components/atoms/GradientIcon";
-import { Heart, Settings, X, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Heart, Plus, Settings, X } from "lucide-react";
+import React from "react";
 
 interface ChatSidebarHeaderProps {
   onClose: () => void;
@@ -11,7 +11,7 @@ interface ChatSidebarHeaderProps {
   createNewConversation: () => void;
 }
 
-const ChatSidebarHeader: React.FC<ChatSidebarHeaderProps> = ({ onClose, onToggleSettings, settingsOpen, settingsButtonRef, createNewConversation }) => {
+const ChatSidebarHeader: React.FC<ChatSidebarHeaderProps> = ({ onClose, onToggleSettings, settingsButtonRef, createNewConversation }) => {
   return (
     <div className="p-4 border-b border-slate-200">
       <div className="flex items-center justify-between mb-4">

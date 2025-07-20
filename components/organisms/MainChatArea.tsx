@@ -13,6 +13,7 @@ import ConversationDropdown from "../atoms/ConversationDropdown";
 import CategoryFilterSection from "../molecules/CategoryFilterSection";
 import CategoryListSection from "../molecules/CategoryListSection";
 import ChatSidebarHeader from "../molecules/ChatSidebarHeader";
+import RecentMessagesSection from "../molecules/RecentMessagesSection";
 import ConversationList from "./ConversationList";
 import MessageArea from "./MessageArea";
 import SettingsPortal from "./SettingsPortal";
@@ -194,13 +195,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     });
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
   const createNewConversation = () => {
     const newConversation: Conversation = {
       id: generateId(),
@@ -317,7 +311,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     showAll: showAllFavorites,
     showMore: showMoreFavorites,
     showLess: showLessFavorites,
-    total: totalFavorites,
     hasMore: hasMoreFavorites,
   } = useShowMore(validFavoriteIds, 3);
 
@@ -347,6 +340,11 @@ export default function MainChatArea({ onClose, conversations, currentConversati
             favorites={favorites}
             toggleFavorite={toggleFavorite}
           />
+        </ScrollArea>
+
+        {/* Recent Messages */}
+        <ScrollArea className="flex-1">
+          <RecentMessagesSection conversations={conversations} />
         </ScrollArea>
 
         {/* Categories */}

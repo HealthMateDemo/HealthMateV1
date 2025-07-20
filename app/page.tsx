@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import LogoBanner from "@/components/molecules/LogoBanner";
+import AnimatedRoadmap from "@/components/organisms/AnimatedRoadmap";
+import CTASection from "@/components/organisms/CTASection";
+import FeaturesSection from "@/components/organisms/FeaturesSection";
+import Footer from "@/components/organisms/Footer";
 import Header from "@/components/organisms/Header";
 import HeroSection from "@/components/organisms/HeroSection";
 import InteractiveChatBox from "@/components/organisms/InteractiveChatBox";
 import LearnMoreModal from "@/components/organisms/LearnMoreModal";
-import LogoBanner from "@/components/molecules/LogoBanner";
-import CTASection from "@/components/organisms/CTASection";
-import Footer from "@/components/organisms/Footer";
-import AnimatedRoadmap from "@/components/organisms/AnimatedRoadmap";
 import MainChatArea from "@/components/organisms/MainChatArea";
-import FeaturesSection from "@/components/organisms/FeaturesSection";
 import useBodyScrollLock from "@/hooks/useBodyScrollLock";
+import { AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 
 // Types for chat functionality
 interface Message {
@@ -140,17 +140,6 @@ export default function LandingPage() {
     },
   };
 
-  const floatingAnimation = {
-    animate: {
-      y: [-10, 10, -10],
-      transition: {
-        duration: 6,
-        repeat: Number.POSITIVE_INFINITY,
-        ease: "easeInOut" as const,
-      },
-    },
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       <AnimatePresence>
@@ -168,7 +157,7 @@ export default function LandingPage() {
           key="learn-more-modal"
           open={showLearnMoreModal}
           onClose={closeLearnMoreModal}
-          onSelect={(focus: string) => {
+          onSelect={(_focus: string) => {
             closeLearnMoreModal();
             handleStartJourney();
             // Optionally, handle focus ("health" or "mental")

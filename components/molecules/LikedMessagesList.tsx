@@ -1,7 +1,6 @@
-import React from "react";
-import { ThumbsUp } from "lucide-react";
-import { useState } from "react";
 import useShowMore from "@/hooks/useShowMore";
+import { ThumbsUp } from "lucide-react";
+import React from "react";
 
 interface Message {
   id: string;

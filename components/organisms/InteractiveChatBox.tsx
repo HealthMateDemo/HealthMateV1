@@ -163,7 +163,7 @@ const InteractiveChatBox = () => {
     }
   };
 
-  const simulateTranscription = async (audioBlob: Blob): Promise<string> => {
+  const simulateTranscription = async (_audioBlob: Blob): Promise<string> => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const sampleTranscriptions = [
       "I've been feeling stressed lately and having trouble sleeping",
