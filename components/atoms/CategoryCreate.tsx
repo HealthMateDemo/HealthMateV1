@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import React from "react";
 
 interface CategoryCreateProps {
@@ -8,7 +9,7 @@ interface CategoryCreateProps {
 
 const CategoryCreate: React.FC<CategoryCreateProps> = ({ newCategory, setNewCategory, handleAddCategory }) => {
   return (
-    <div className="flex items-center gap-2 mb-4">
+    <div className="flex items-center gap-1">
       <input
         type="text"
         value={newCategory}
@@ -19,8 +20,8 @@ const CategoryCreate: React.FC<CategoryCreateProps> = ({ newCategory, setNewCate
           if (e.key === "Enter") handleAddCategory();
         }}
       />
-      <button className="bg-emerald-500 text-white px-2 py-1 rounded text-xs" onClick={handleAddCategory} disabled={!newCategory.trim()}>
-        Add
+      <button className="cursor-pointer hover:scale-110 transition-transform" onClick={handleAddCategory} disabled={!newCategory.trim()}>
+        <Plus className="size-4 text-emerald-500" />
       </button>
     </div>
   );

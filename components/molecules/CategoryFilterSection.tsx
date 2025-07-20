@@ -1,5 +1,5 @@
-import React from "react";
 import { X } from "lucide-react";
+import React from "react";
 
 interface CategoryFilterSectionProps {
   categoryFilter: string;
@@ -11,7 +11,7 @@ interface CategoryFilterSectionProps {
 
 const CategoryFilterSection: React.FC<CategoryFilterSectionProps> = ({ categoryFilter, setCategoryFilter, userCategories, defaultCategories, handleRemoveCategory }) => {
   return (
-    <div className="mb-2">
+    <div className="mb-2 mt-4">
       <span className="block text-xs text-slate-500 font-semibold mb-1">Filter by Category</span>
       <div className="flex flex-wrap gap-1 mb-2">
         {["all", "saved", ...userCategories].map((cat) => (

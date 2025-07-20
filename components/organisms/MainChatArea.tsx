@@ -8,7 +8,6 @@ import { Brain, Heart as HeartIcon, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CategoryCreate from "../atoms/CategoryCreate";
 import ChatInput from "../atoms/ChatInput";
-import ChatSidebarSearchBar from "../atoms/ChatSidebarSearchBar";
 import ConversationDropdown from "../atoms/ConversationDropdown";
 import CategoryFilterSection from "../molecules/CategoryFilterSection";
 import CategoryListSection from "../molecules/CategoryListSection";
@@ -317,7 +316,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   return (
     <div className="fixed inset-0 bg-white z-50 flex overflow-hidden">
       {/* Left Sidebar */}
-      <div className="w-80 bg-slate-50 border-r border-slate-200 flex flex-col">
+      <div className="max-w-[340px] bg-slate-50 border-r border-slate-200 flex flex-col">
         {/* Header */}
         <ChatSidebarHeader
           onClose={onClose}
@@ -325,10 +324,9 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           settingsOpen={settingsOpen}
           settingsButtonRef={settingsButtonRef}
           createNewConversation={createNewConversation}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
-
-        {/* Search */}
-        <ChatSidebarSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
         {/* Conversations List */}
         <ScrollArea className="flex-1">
@@ -348,11 +346,12 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         </ScrollArea>
 
         {/* Categories */}
-        <div className="p-4 border-t border-slate-200">
-          <h3 className="font-medium text-slate-700 mb-3">Categories</h3>
-
-          {/* Create new category at the top */}
-          <CategoryCreate newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory} />
+        <div className="p-4 border-t border-slate-200 max-h-[220px] overflow-y-auto">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className=" text-slate-700">Categories</h3>
+            {/* Create new category at the top */}
+            <CategoryCreate newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory} />
+          </div>
 
           {/* Filter by Category section */}
           <CategoryFilterSection

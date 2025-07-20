@@ -31,7 +31,6 @@ const LikedMessagesList: React.FC<LikedMessagesListProps> = ({ conversations, ai
   const likedMessages = conversations.flatMap((conv) =>
     conv.messages.filter((m) => m.sender === "ai" && aiFeedback[m.id] === "like").map((m) => ({ ...m, conversationId: conv.id, conversationTitle: conv.title })),
   );
-  if (likedMessages.length === 0) return null;
   const { displayedItems: displayedMessages, showAll, showMore, showLess, total: totalLiked, hasMore } = useShowMore(likedMessages, 3);
   return (
     <div className="mt-4">
@@ -41,27 +40,31 @@ const LikedMessagesList: React.FC<LikedMessagesListProps> = ({ conversations, ai
           {totalLiked}
         </span>
       </span>
-      <ul className="space-y-1">
-        {displayedMessages.map((msg) => (
-          <li key={msg.id}>
-            <button
-              className="w-full text-left flex items-center gap-2 px-2 py-1 rounded hover:bg-emerald-50 transition text-emerald-700 text-xs"
-              onClick={() => onSelectConversation && onSelectConversation(msg.conversationId)}
-              title={msg.conversationTitle}
-            >
-              <ThumbsUp className="w-4 h-4 text-emerald-500" />
-              <span className="truncate max-w-[140px]">{msg.content.length > 40 ? msg.content.slice(0, 40) + "..." : msg.content}</span>
-              <span className="ml-auto text-slate-400">{msg.conversationTitle}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      {hasMore && !showAll && (
+      {totalLiked === 0 ? (
+        <div className="text-xs text-slate-400 mb-2">No liked messages yet.</div>
+      ) : (
+        <ul className="space-y-1">
+          {displayedMessages.map((msg) => (
+            <li key={msg.id}>
+              <button
+                className="w-full text-left flex items-center gap-2 px-2 py-1 rounded hover:bg-emerald-50 transition text-emerald-700 text-xs"
+                onClick={() => onSelectConversation && onSelectConversation(msg.conversationId)}
+                title={msg.conversationTitle}
+              >
+                <ThumbsUp className="w-4 h-4 text-emerald-500" />
+                <span className="truncate max-w-[140px]">{msg.content.length > 40 ? msg.content.slice(0, 40) + "..." : msg.content}</span>
+                <span className="ml-auto text-slate-400">{msg.conversationTitle}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {hasMore && totalLiked > 0 && !showAll && (
         <button className="mt-2 text-xs text-emerald-600 hover:underline focus:outline-none" onClick={showMore}>
           Show more
         </button>
       )}
-      {hasMore && showAll && (
+      {hasMore && totalLiked > 0 && showAll && (
         <button className="mt-2 text-xs text-emerald-600 hover:underline focus:outline-none" onClick={showLess}>
           Show less
         </button>
