@@ -1,4 +1,5 @@
 import CategoryBadge from "@/components/atoms/CategoryBadge";
+import TemplateCategory from "@/components/atoms/TemplateCategory";
 import LikedMessagesList from "@/components/molecules/LikedMessagesList";
 import { Heart as HeartIcon } from "lucide-react";
 import React from "react";
@@ -11,6 +12,7 @@ interface Conversation {
   updatedAt: Date;
   category?: string;
   isSaved?: boolean;
+  template?: "global" | "health" | "mindfull";
 }
 
 interface FavoritesChatSectionProps {
@@ -57,6 +59,9 @@ const FavoritesChatSection: React.FC<FavoritesChatSectionProps> = ({
                   <span className="truncate font-medium text-slate-800 flex text-xs items-center gap-1">
                     {favConv.title}
                     <CategoryBadge category={favConv.category} size="sm" />
+                    <TemplateCategory template={favConv.template || "global"} className="text-xs">
+                      {favConv.template || "global"}
+                    </TemplateCategory>
                   </span>
                   <span className="text-xs text-slate-400 ml-auto">{favConv.updatedAt instanceof Date ? favConv.updatedAt.toLocaleDateString("en-US") : ""}</span>
                 </button>

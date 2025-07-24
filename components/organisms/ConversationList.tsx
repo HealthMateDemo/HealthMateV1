@@ -1,4 +1,5 @@
 import CategoryBadge from "@/components/atoms/CategoryBadge";
+import TemplateCategory from "@/components/atoms/TemplateCategory";
 import { Brain, Heart as HeartIcon, MessageCircle, Save, ThumbsDown, ThumbsUp } from "lucide-react";
 import React from "react";
 
@@ -18,6 +19,7 @@ interface Conversation {
   updatedAt: Date;
   category?: string;
   isSaved?: boolean;
+  template?: "global" | "health" | "mindfull";
 }
 
 interface ConversationListProps {
@@ -50,6 +52,9 @@ const ConversationList: React.FC<ConversationListProps> = ({ filteredConversatio
               <h4 className="font-medium text-slate-800 truncate text-sm flex items-center gap-2">
                 {conversation.title}
                 <CategoryBadge category={conversation.category} size="md" />
+                <TemplateCategory template={conversation.template || "global"} className="text-xs">
+                  {conversation.template || "global"}
+                </TemplateCategory>
               </h4>
               <div className="flex items-center gap-2">
                 {conversation.isSaved && <Save className="w-3 h-3 text-emerald-500" />}

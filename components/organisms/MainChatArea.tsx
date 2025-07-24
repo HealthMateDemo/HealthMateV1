@@ -1,16 +1,14 @@
 "use client";
 
-import GradientIcon from "@/components/atoms/GradientIcon";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useShowMore from "@/hooks/useShowMore";
 import { WebSocketMessage, websocketService } from "@/lib/websocket";
-import { Brain, Heart as HeartIcon, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CategoryCreate from "../atoms/CategoryCreate";
 import ChatInput from "../atoms/ChatInput";
-import ConversationDropdown from "../atoms/ConversationDropdown";
 import CategoryFilterSection from "../molecules/CategoryFilterSection";
 import CategoryListSection from "../molecules/CategoryListSection";
+import ChatHeader from "../molecules/ChatHeader";
 import ChatSidebarHeader from "../molecules/ChatSidebarHeader";
 import RecentMessagesSection from "../molecules/RecentMessagesSection";
 import ConversationList from "./ConversationList";
@@ -34,6 +32,7 @@ interface Conversation {
   updatedAt: Date;
   category?: string;
   isSaved?: boolean;
+  template?: "global" | "health" | "mindfull";
 }
 
 interface MainChatAreaProps {
@@ -53,8 +52,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   // Add state for search functionality
   const [searchTerm, setSearchTerm] = useState("");
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState("");
 
   // Add state for new category creation
   const [newCategory, setNewCategory] = useState("");
@@ -65,9 +62,28 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   // Define default categories
   const defaultCategories = ["all", "saved"];
 
-  // Add state for user-created categories
+  // Add state for user-created categories (persisted in localStorage)
   const [userCategories, setUserCategories] = useState<string[]>(() => {
-    // Initialize from conversations on mount
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("zenhealth-user-categories");
+        if (stored) {
+          const storedCategories = JSON.parse(stored);
+          // Also include categories from existing conversations to ensure consistency
+          const conversationCategories = Array.from(
+            new Set(
+              conversations
+                .map((c) => (typeof c.category === "string" ? c.category.trim().toLowerCase() : undefined))
+                .filter((cat): cat is string => typeof cat === "string" && !!cat && !["all", "saved"].includes(cat)),
+            ),
+          );
+          // Merge stored categories with conversation categories, removing duplicates
+          const mergedCategories = Array.from(new Set([...storedCategories, ...conversationCategories]));
+          return mergedCategories;
+        }
+      } catch {}
+    }
+    // Fallback: Initialize from conversations on mount
     const initial = Array.from(
       new Set(
         conversations
@@ -77,6 +93,13 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     );
     return initial;
   });
+
+  // Persist user categories to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("zenhealth-user-categories", JSON.stringify(userCategories));
+    }
+  }, [userCategories]);
 
   // Like/dislike state: { [messageId: string]: 'like' | 'dislike' | undefined }
   const [aiFeedback, setAiFeedback] = useState<{ [id: string]: "like" | "dislike" | undefined }>(() => {
@@ -201,6 +224,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
+      template: "global", // Set default template to global
     };
     setConversations((prev) => {
       const updated = [newConversation, ...prev];
@@ -210,15 +234,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   };
 
   const generateId = () => (window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now().toString());
-
-  // Update conversation title
-  const handleTitleEdit = () => {
-    if (!currentConversation || !editedTitle.trim()) return;
-    const updatedConversation = { ...currentConversation, title: editedTitle.trim() };
-    setCurrentConversation(updatedConversation);
-    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
-    setIsEditingTitle(false);
-  };
 
   // Add a new category
   const handleAddCategory = () => {
@@ -233,6 +248,14 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   const handleAssignCategory = (cat: string) => {
     if (!currentConversation) return;
     const updatedConversation = { ...currentConversation, category: cat };
+    setCurrentConversation(updatedConversation);
+    setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
+  };
+
+  // Assign a template to the current conversation
+  const handleAssignTemplate = (template: "global" | "health" | "mindfull") => {
+    if (!currentConversation) return;
+    const updatedConversation = { ...currentConversation, template };
     setCurrentConversation(updatedConversation);
     setConversations((prev) => prev.map((conv) => (conv.id === currentConversation.id ? updatedConversation : conv)));
   };
@@ -298,6 +321,9 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   const handleResetAll = () => {
     localStorage.removeItem("zenhealth-chat-state");
+    localStorage.removeItem("zenhealth-user-categories");
+    localStorage.removeItem("zenhealth-ai-feedback");
+    localStorage.removeItem("zenhealth-favorites");
     window.location.reload();
   };
 
@@ -370,98 +396,18 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Chat Header */}
-        <div className="p-4 border-b border-slate-200 bg-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <GradientIcon icon={Brain} size="lg" />
-              <div>
-                {isEditingTitle ? (
-                  <input
-                    className="font-semibold text-slate-800 text-lg border-b border-emerald-400 outline-none bg-transparent"
-                    value={editedTitle}
-                    autoFocus
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                    onBlur={handleTitleEdit}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleTitleEdit();
-                      } else if (e.key === "Escape") {
-                        setIsEditingTitle(false);
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <h2
-                      className="font-semibold text-slate-800 cursor-pointer"
-                      title="Click to edit title"
-                      onClick={() => {
-                        setIsEditingTitle(true);
-                        setEditedTitle(currentConversation?.title || "");
-                      }}
-                    >
-                      {currentConversation?.title || "New Conversation"}
-                    </h2>
-                    {currentConversation && (
-                      <HeartIcon className={`w-5 h-5 ${favorites.includes(currentConversation.id) ? "fill-emerald-500 text-emerald-500" : "text-slate-400"}`} />
-                    )}
-                  </div>
-                )}
-                <p className="text-sm text-slate-500">AI Health Assistant • Online</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {/* Category assignment dropdown */}
-              {currentConversation && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500">Category:</span>
-                  <select
-                    className="border rounded px-2 py-1 text-xs mr-2"
-                    value={typeof currentConversation.category === "string" ? currentConversation.category.trim().toLowerCase() : ""}
-                    onChange={(e) => handleAssignCategory(e.target.value)}
-                  >
-                    <option value="">Default</option>
-                    <option value="saved">Saved</option>
-                    {userCategories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                  {/* Category badge */}
-                  {(() => {
-                    const cat = typeof currentConversation.category === "string" ? currentConversation.category.trim().toLowerCase() : "";
-                    if (!cat) {
-                      return <span className="ml-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold">Default</span>;
-                    }
-                    if (cat === "saved") {
-                      return <span className="ml-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold">Saved</span>;
-                    }
-                    return <span className="ml-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold">{cat.charAt(0).toUpperCase() + cat.slice(1)}</span>;
-                  })()}
-                  {/* Like/Dislike counts */}
-                  <span className="flex items-center gap-1 ml-2">
-                    <ThumbsUp className="w-4 h-4 text-emerald-500" />
-                    <span className="text-xs text-emerald-700 font-semibold">{likeCount}</span>
-                    <ThumbsDown className="w-4 h-4 text-red-500 ml-2" />
-                    <span className="text-xs text-red-700 font-semibold">{dislikeCount}</span>
-                  </span>
-                </div>
-              )}
-              <ConversationDropdown
-                onDelete={() => {
-                  if (!currentConversation) return;
-                  setConversations((prev) => {
-                    const updated = prev.filter((c) => c.id !== currentConversation.id);
-                    setCurrentConversation(updated[0] || null);
-                    if (updated.length === 0) onClose();
-                    return updated;
-                  });
-                }}
-              />
-            </div>
-          </div>
-        </div>
+        <ChatHeader
+          currentConversation={currentConversation}
+          favorites={favorites}
+          userCategories={userCategories}
+          likeCount={likeCount}
+          dislikeCount={dislikeCount}
+          onClose={onClose}
+          setConversations={setConversations}
+          setCurrentConversation={setCurrentConversation}
+          handleAssignCategory={handleAssignCategory}
+          handleAssignTemplate={handleAssignTemplate}
+        />
 
         {/* Messages Area */}
         <MessageArea currentConversation={currentConversation} aiFeedback={aiFeedback} handleFeedback={handleFeedback} isTyping={isTyping} />

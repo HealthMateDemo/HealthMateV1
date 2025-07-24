@@ -31,6 +31,7 @@ interface Conversation {
   updatedAt: Date;
   category?: string;
   isSaved?: boolean;
+  template?: "global" | "health" | "mindfull";
 }
 
 export default function LandingPage() {
@@ -112,6 +113,7 @@ export default function LandingPage() {
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date(),
+        template: "global", // Set default template to global
       };
       setConversations([newConversation]);
       setCurrentConversation(newConversation);
