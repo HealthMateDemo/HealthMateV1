@@ -173,7 +173,7 @@ function processNumberedLists(text: string): string {
   // Match numbered lists with potential sub-lists
   const listRegex = /^(\d+\.\s+.*?)(?=\n\d+\.|$)/gm;
 
-  return text.replace(listRegex, (match, listItem) => {
+  return text.replace(listRegex, (_match, listItem) => {
     // Process sub-lists with dots
     const subListRegex = /^(\s*[-•]\s+.*?)(?=\n\s*[-•]|\n\d+\.|$)/gm;
     const processedSubList = listItem.replace(subListRegex, (subMatch: string) => {
@@ -200,7 +200,7 @@ function processReferences(text: string): string {
   // Add quotes around reference-like text
   const referenceRegex = /(?:references?|sources?|citations?|studies?|research):\s*(.*?)(?=\n\n|\n\d+\.|$)/gi;
 
-  return text.replace(referenceRegex, (match, reference) => {
+  return text.replace(referenceRegex, (_match, reference) => {
     return `> ${reference.trim()}`;
   });
 }
