@@ -128,6 +128,12 @@ export default function LandingPage() {
     setShowLearnMoreModal(false);
   };
 
+  const handleFocusSelection = (focus: "health" | "mental") => {
+    // This function is now just a placeholder for any additional logic
+    // The actual conversation creation is handled in LearnMoreModal
+    console.log(`Focus selected: ${focus}`);
+  };
+
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
@@ -159,11 +165,10 @@ export default function LandingPage() {
           key="learn-more-modal"
           open={showLearnMoreModal}
           onClose={closeLearnMoreModal}
-          onSelect={(_focus: string) => {
-            closeLearnMoreModal();
-            handleStartJourney();
-            // Optionally, handle focus ("health" or "mental")
-          }}
+          onSelect={handleFocusSelection}
+          setShowChat={setShowChat}
+          setConversations={setConversations}
+          setCurrentConversation={setCurrentConversation}
         />
       </AnimatePresence>
 

@@ -1,4 +1,5 @@
 import TypingIndicator from "@/components/atoms/TypingIndicator";
+import { renderMarkdown } from "@/util/markdown";
 import { format } from "date-fns";
 import { Brain, ThumbsDown, ThumbsUp, User } from "lucide-react";
 import React from "react";
@@ -58,14 +59,16 @@ const MessageArea: React.FC<MessageAreaProps> = ({ currentConversation, aiFeedba
   };
 
   const renderAIMessage = (message: Message) => {
+    const markdownElements = renderMarkdown(message.content);
+
     return (
       <>
         <span className="mr-2 flex items-center justify-center self-center">
           <Brain className="w-5 h-5 text-emerald-400" />
         </span>
         <div className="flex flex-col">
-          <div className="max-w-[70vw] rounded-2xl p-4 bg-slate-100 text-slate-800">
-            <p className="text-sm">{message.content}</p>
+          <div className="max-w-[70vw] rounded-2xl p-4 bg-slate-100">
+            <div className="markdown text-sm text-slate-800">{markdownElements}</div>
             <p className="text-xs mt-2 text-slate-500">{getFormattedTimestamp(message.timestamp)}</p>
           </div>
           <div className="flex items-center gap-2 mt-2" style={{ marginLeft: 0 }}>

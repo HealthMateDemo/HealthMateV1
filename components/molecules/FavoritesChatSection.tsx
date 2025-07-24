@@ -1,4 +1,5 @@
 import CategoryBadge from "@/components/atoms/CategoryBadge";
+import NumberBadge from "@/components/atoms/NumberBadge";
 import TemplateCategory from "@/components/atoms/TemplateCategory";
 import LikedMessagesList from "@/components/molecules/LikedMessagesList";
 import { Heart as HeartIcon } from "lucide-react";
@@ -42,9 +43,7 @@ const FavoritesChatSection: React.FC<FavoritesChatSectionProps> = ({
     <div className="mb-6">
       <span className="text-xs text-slate-500 font-semibold mb-2 flex items-center gap-2">
         Favorites
-        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold min-w-[18px] h-[18px]">
-          {validFavoriteIds.length}
-        </span>
+        <NumberBadge count={validFavoriteIds.length} variant="emerald" />
       </span>
       {validFavoriteIds.length === 0 && <div className="text-xs text-slate-400">No favorites yet.</div>}
       <ul className="space-y-2">

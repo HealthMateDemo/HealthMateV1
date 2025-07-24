@@ -1,3 +1,4 @@
+import NumberBadge from "@/components/atoms/NumberBadge";
 import useShowMore from "@/hooks/useShowMore";
 import { ThumbsUp } from "lucide-react";
 import React from "react";
@@ -36,9 +37,7 @@ const LikedMessagesList: React.FC<LikedMessagesListProps> = ({ conversations, ai
     <div className="mt-4">
       <span className="text-xs text-slate-500 font-semibold mb-2 flex items-center gap-2">
         Liked Messages
-        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold min-w-[18px] h-[18px]">
-          {totalLiked}
-        </span>
+        <NumberBadge count={totalLiked} variant="emerald" />
       </span>
       {totalLiked === 0 ? (
         <div className="text-xs text-slate-400 mb-2">No liked messages yet.</div>

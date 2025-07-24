@@ -214,6 +214,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       content: inputMessage,
       sender: "user",
       conversationId: currentConversation.id,
+      template: currentConversation.template || "global",
     });
   };
 

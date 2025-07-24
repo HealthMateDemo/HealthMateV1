@@ -4,6 +4,7 @@ export interface WebSocketMessage {
   sender?: "user" | "ai";
   timestamp?: Date;
   conversationId?: string;
+  template?: "global" | "health" | "mindfull";
 }
 
 export class WebSocketService {
@@ -86,15 +87,29 @@ export class WebSocketService {
       };
       this.ws.send(JSON.stringify(fullMessage));
     } else {
-      console.warn("WebSocket not connected, message not sent");
-      // Simulate AI response for development
+      console.warn("WebSocket not connected, using fallback response");
+      // Simulate AI response for development with command support
       setTimeout(() => {
+        // Import the command system for fallback responses
+        const { getCommandResponse } = require("../constants/commands");
+
+        const template = (message as any).template || "global";
+        const commandResponse = getCommandResponse(message.content || "", template);
+
+        let responseContent: string;
+        if (commandResponse) {
+          responseContent = commandResponse;
+        } else {
+          responseContent = `I received your message: "${message.content}". This is a simulated response while WebSocket is not connected.`;
+        }
+
         this.notifyHandlers({
           type: "message",
-          content: `I received your message: "${message.content}". This is a simulated response while WebSocket is not connected.`,
+          content: responseContent,
           sender: "ai",
           timestamp: new Date(),
           conversationId: message.conversationId,
+          template: template,
         });
       }, 1000);
     }

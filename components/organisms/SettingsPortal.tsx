@@ -47,7 +47,7 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50" onClick={() => setSettingsOpen(false)} style={{ pointerEvents: "auto" }}>
       <div
-        className="absolute bg-white rounded-2xl shadow-xl p-6 w-80 transition-all duration-300 ease-out"
+        className="absolute bg-white rounded-2xl shadow-xl p-6 w-[360px] transition-all duration-300 ease-out"
         style={{
           top: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().bottom + 8 : 80,
           left: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().left : 80,

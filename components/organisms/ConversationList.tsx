@@ -1,4 +1,5 @@
 import CategoryBadge from "@/components/atoms/CategoryBadge";
+import NumberBadge from "@/components/atoms/NumberBadge";
 import TemplateCategory from "@/components/atoms/TemplateCategory";
 import { Brain, Heart as HeartIcon, MessageCircle, Save, ThumbsDown, ThumbsUp } from "lucide-react";
 import React from "react";
@@ -32,9 +33,14 @@ interface ConversationListProps {
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({ filteredConversations, currentConversation, handleSelectConversation, aiFeedback, favorites, toggleFavorite }) => {
+  const conversationCount = filteredConversations.length;
+
   return (
     <div className="p-3 space-y-2">
-      <h3 className="text-slate-700 text-sm text-center">Conversations</h3>
+      <h3 className="text-slate-700 text-sm text-center flex items-center justify-center gap-2">
+        Conversations
+        <NumberBadge count={conversationCount} variant="emerald" />
+      </h3>
       {filteredConversations.map((conversation, idx) => {
         // Calculate like/dislike counts for this conversation
         const aiMsgs = conversation.messages.filter((m) => m.sender === "ai");
