@@ -59,6 +59,9 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   // Add state for settings panel
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Add state for sidebar view toggle (conversations vs recent messages)
+  const [sidebarView, setSidebarView] = useState<"conversations" | "messages">("conversations");
+
   // Define default categories
   const defaultCategories = ["all", "saved"];
 
@@ -404,26 +407,27 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           setSearchTerm={setSearchTerm}
         />
 
-        {/* Conversations List */}
+        {/* Sidebar Content */}
         <ScrollArea className="flex-1">
-          <ConversationList
-            filteredConversations={filteredConversations}
-            currentConversation={currentConversation}
-            handleSelectConversation={handleSelectConversation}
-            aiFeedback={aiFeedback}
-            favorites={favorites}
-            toggleFavorite={toggleFavorite}
-            handleArchive={handleArchive}
-          />
-        </ScrollArea>
-
-        {/* Recent Messages */}
-        <ScrollArea className="flex-1">
-          <RecentMessagesSection conversations={conversations} />
+          {sidebarView === "conversations" ? (
+            <ConversationList
+              filteredConversations={filteredConversations}
+              currentConversation={currentConversation}
+              handleSelectConversation={handleSelectConversation}
+              aiFeedback={aiFeedback}
+              favorites={favorites}
+              toggleFavorite={toggleFavorite}
+              handleArchive={handleArchive}
+              sidebarView={sidebarView}
+              setSidebarView={setSidebarView}
+            />
+          ) : (
+            <RecentMessagesSection conversations={conversations} sidebarView={sidebarView} setSidebarView={setSidebarView} onSelectConversation={handleSelectConversation} />
+          )}
         </ScrollArea>
 
         {/* Categories */}
-        <div className="p-4 border-t border-slate-200 max-h-[220px] overflow-y-auto">
+        <div className="p-4 border-t border-slate-200 max-h-[254px] overflow-y-auto">
           <div className="flex items-center justify-between gap-4">
             <h3 className=" text-slate-700">Categories</h3>
             {/* Create new category at the top */}

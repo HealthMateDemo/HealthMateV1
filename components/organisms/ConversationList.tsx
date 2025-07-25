@@ -1,7 +1,7 @@
 import CategoryBadge from "@/components/atoms/CategoryBadge";
 import NumberBadge from "@/components/atoms/NumberBadge";
 import TemplateCategory from "@/components/atoms/TemplateCategory";
-import { Archive, Brain, Heart as HeartIcon, MessageCircle, Save, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Archive, Brain, Heart as HeartIcon, MessageCircle, MessageSquare, Save, ThumbsDown, ThumbsUp } from "lucide-react";
 import React from "react";
 
 interface Message {
@@ -31,6 +31,8 @@ interface ConversationListProps {
   favorites: string[];
   toggleFavorite: (conversationId: string) => void;
   handleArchive: (conversationId: string) => void;
+  sidebarView: "conversations" | "messages";
+  setSidebarView: (view: "conversations" | "messages") => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
@@ -41,15 +43,39 @@ const ConversationList: React.FC<ConversationListProps> = ({
   favorites,
   toggleFavorite,
   handleArchive,
+  sidebarView,
+  setSidebarView,
 }) => {
   const conversationCount = filteredConversations.length;
 
   return (
     <div className="p-3 space-y-2">
-      <h3 className="text-slate-700 text-sm text-center flex items-center justify-center gap-2">
-        Conversations
-        <NumberBadge count={conversationCount} variant="emerald" />
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-slate-700 text-sm flex items-center gap-2 flex-1 justify-center">
+          Conversations
+          <NumberBadge count={conversationCount} variant="emerald" />
+        </h3>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setSidebarView("conversations")}
+            className={`p-1.5 rounded-md transition-colors ${
+              sidebarView === "conversations" ? "bg-emerald-100 text-emerald-700" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+            }`}
+            aria-label="Show conversations"
+          >
+            <MessageCircle className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setSidebarView("messages")}
+            className={`p-1.5 rounded-md transition-colors ${
+              sidebarView === "messages" ? "bg-emerald-100 text-emerald-700" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+            }`}
+            aria-label="Show recent messages"
+          >
+            <MessageSquare className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
       {filteredConversations.map((conversation, idx) => {
         // Calculate like/dislike counts for this conversation
         const aiMsgs = conversation.messages.filter((m) => m.sender === "ai");
