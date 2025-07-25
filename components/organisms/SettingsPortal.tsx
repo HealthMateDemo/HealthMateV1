@@ -49,20 +49,43 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({
   handleUnarchive,
 }) => {
   if (!settingsOpen || typeof window === "undefined") return null;
+
+  // Calculate portal position based on settings button
+  const getPortalPosition = () => {
+    const buttonRect = settingsButtonRef.current?.getBoundingClientRect();
+    const top = buttonRect ? buttonRect.bottom + 8 : 80;
+    const left = buttonRect ? buttonRect.left : 80;
+
+    return { top, left };
+  };
+
+  // Portal styles
+  const portalStyles = {
+    overlay: {
+      position: "fixed" as const,
+      inset: 0,
+      zIndex: 50,
+      pointerEvents: "auto" as const,
+    },
+    container: {
+      position: "absolute" as const,
+      backgroundColor: "white",
+      borderRadius: "1rem",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+      padding: "1.5rem",
+      width: "360px",
+      transition: "all 0.3s ease-out",
+      opacity: settingsOpen ? 1 : 0,
+      transform: settingsOpen ? "scale(1)" : "scale(0.95)",
+      ...getPortalPosition(),
+    },
+  };
+
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-50" onClick={() => setSettingsOpen(false)} style={{ pointerEvents: "auto" }}>
-      <div
-        className="absolute bg-white rounded-2xl shadow-xl p-6 w-[360px] transition-all duration-300 ease-out"
-        style={{
-          top: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().bottom + 8 : 80,
-          left: settingsButtonRef.current ? settingsButtonRef.current.getBoundingClientRect().left : 80,
-          opacity: settingsOpen ? 1 : 0,
-          transform: settingsOpen ? "scale(1)" : "scale(0.95)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50" style={portalStyles.overlay} onClick={() => setSettingsOpen(false)}>
+      <div style={portalStyles.container} onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold mb-4 border-b border-slate-200 pb-2 text-center">Overview</h2>
+
         <FavoritesChatSection
           validFavoriteIds={validFavoriteIds}
           displayedFavorites={displayedFavorites}
@@ -74,9 +97,11 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({
           showLessFavorites={showLessFavorites}
           aiFeedback={aiFeedback}
         />
+
         <div className="mt-6 border-t border-slate-200 pt-4">
           <ArchiveConversation archivedConversations={archivedConversations} handleUnarchive={handleUnarchive} aiFeedback={aiFeedback} />
         </div>
+
         <div className="mt-6">
           <span className="text-xs text-slate-400">Danger Zone</span>
           <button
