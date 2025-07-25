@@ -34,8 +34,6 @@ interface ChatHeaderProps {
   setCurrentConversation: React.Dispatch<React.SetStateAction<Conversation | null>>;
   handleAssignCategory: (cat: string) => void;
   handleAssignTemplate: (template: "global" | "health" | "mindfull") => void;
-  notes: string;
-  onNotesChange: (notes: string) => void;
   isNotesOpen: boolean;
   onNotesToggle: () => void;
 }
@@ -51,8 +49,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   setCurrentConversation,
   handleAssignCategory,
   handleAssignTemplate,
-  notes,
-  onNotesChange,
   isNotesOpen,
   onNotesToggle,
 }) => {

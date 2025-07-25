@@ -50,27 +50,63 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState<{ [conversationId: string]: string }>({});
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const notesLoadedRef = useRef(false);
 
-  // Load notes from localStorage
+  // Load notes and sidebar state from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
+        // Load notes
         const storedNotes = localStorage.getItem("zenhealth-notes");
         if (storedNotes) {
-          setNotes(storedNotes);
+          const parsedNotes = JSON.parse(storedNotes);
+          setNotes(parsedNotes);
         }
-      } catch {}
+
+        // Load sidebar state
+        const storedSidebarState = localStorage.getItem("zenhealth-notes-sidebar-open");
+        if (storedSidebarState) {
+          const isOpen = JSON.parse(storedSidebarState);
+          setIsNotesOpen(isOpen);
+        }
+
+        notesLoadedRef.current = true;
+      } catch (error) {
+        console.error("Error loading notes from localStorage:", error);
+        notesLoadedRef.current = true;
+      }
     }
   }, []);
+
+  // Ensure notes are available when currentConversation changes
+  useEffect(() => {
+    if (currentConversation && notesLoadedRef.current) {
+      // Only initialize empty notes if this conversation doesn't have any notes at all
+      // Don't overwrite existing notes that were loaded from localStorage
+      if (notes[currentConversation.id] === undefined) {
+        setNotes((prev) => ({
+          ...prev,
+          [currentConversation.id]: "",
+        }));
+      }
+    }
+  }, [currentConversation]);
 
   // Persist notes to localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("zenhealth-notes", notes);
+      localStorage.setItem("zenhealth-notes", JSON.stringify(notes));
     }
   }, [notes]);
+
+  // Persist sidebar state to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("zenhealth-notes-sidebar-open", JSON.stringify(isNotesOpen));
+    }
+  }, [isNotesOpen]);
 
   // Add state for category filter
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -288,7 +324,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       // Set currentConversation to the updated object from the new array
       const updatedCurrent = updated.find((c) => c.id === currentConversation.id) || null;
       setCurrentConversation(updatedCurrent);
-      console.log("After send, currentConversation.messages:", updatedCurrent?.messages);
       return updated;
     });
 
@@ -410,7 +445,17 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   };
 
   const handleNotesChange = (newNotes: string) => {
-    setNotes(newNotes);
+    if (!currentConversation) return;
+    setNotes((prev) => ({
+      ...prev,
+      [currentConversation.id]: newNotes,
+    }));
+  };
+
+  // Get current conversation's notes
+  const getCurrentNotes = () => {
+    const currentNotes = currentConversation ? notes[currentConversation.id] || "" : "";
+    return currentNotes;
   };
 
   // Add a new category
@@ -503,6 +548,9 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     localStorage.removeItem("zenhealth-ai-feedback");
     localStorage.removeItem("zenhealth-favorites");
     localStorage.removeItem("zenhealth-archived-conversations");
+    localStorage.removeItem("zenhealth-notes");
+    localStorage.removeItem("zenhealth-notes-sidebar-open");
+    localStorage.removeItem("zenhealth-notes-history"); // Clear notes history
     window.location.reload();
   };
 
@@ -588,8 +636,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           setCurrentConversation={setCurrentConversation}
           handleAssignCategory={handleAssignCategory}
           handleAssignTemplate={handleAssignTemplate}
-          notes={notes}
-          onNotesChange={handleNotesChange}
           isNotesOpen={isNotesOpen}
           onNotesToggle={handleNotesToggle}
         />
@@ -631,7 +677,13 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       />
 
       {/* Notes Sidebar */}
-      <NotesSidebar isOpen={isNotesOpen} onClose={() => setIsNotesOpen(false)} notes={notes} onNotesChange={handleNotesChange} />
+      <NotesSidebar
+        key={`notes-${currentConversation?.id || "no-conversation"}-${notesLoadedRef.current}`}
+        isOpen={isNotesOpen}
+        onClose={() => setIsNotesOpen(false)}
+        notes={getCurrentNotes()}
+        onNotesChange={handleNotesChange}
+      />
     </div>
   );
 }
