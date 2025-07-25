@@ -1,12 +1,14 @@
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreVertical, StickyNote, Trash2 } from "lucide-react";
 import React from "react";
-import { MoreVertical, Trash2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 interface ConversationDropdownProps {
   onDelete: () => void;
+  onNotesClick: () => void;
+  isNotesOpen: boolean;
 }
 
-const ConversationDropdown: React.FC<ConversationDropdownProps> = ({ onDelete }) => {
+const ConversationDropdown: React.FC<ConversationDropdownProps> = ({ onDelete, onNotesClick, isNotesOpen }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -18,6 +20,10 @@ const ConversationDropdown: React.FC<ConversationDropdownProps> = ({ onDelete })
         <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:bg-red-50 focus:text-red-700">
           <Trash2 className="w-4 h-4 mr-2" />
           Delete conversation
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onNotesClick} className={`focus:bg-emerald-50 focus:text-emerald-700 ${isNotesOpen ? "bg-emerald-50 text-emerald-700" : "text-slate-700"}`}>
+          <StickyNote className="w-4 h-4 mr-2" />
+          Notes
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

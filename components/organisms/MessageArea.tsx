@@ -1,4 +1,7 @@
+import CopyButton from "@/components/atoms/CopyButton";
+import Tooltip from "@/components/atoms/Tooltip";
 import TypingIndicator from "@/components/atoms/TypingIndicator";
+import { openImageInNewTab } from "@/util/image-viewer";
 import { renderMarkdown } from "@/util/markdown";
 import { format } from "date-fns";
 import { Brain, ThumbsDown, ThumbsUp, User } from "lucide-react";
@@ -59,7 +62,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({ currentConversation, aiFeedba
   };
 
   const renderAIMessage = (message: Message) => {
-    const markdownElements = renderMarkdown(message.content);
+    const markdownElement = renderMarkdown(message.content);
 
     return (
       <>
@@ -68,16 +71,25 @@ const MessageArea: React.FC<MessageAreaProps> = ({ currentConversation, aiFeedba
         </span>
         <div className="flex flex-col">
           <div className="max-w-[70vw] rounded-2xl p-4 bg-slate-100">
-            <div className="markdown text-sm text-slate-800">{markdownElements}</div>
+            <div className="markdown text-sm text-slate-800 max-w-full overflow-hidden break-words">{markdownElement}</div>
             <p className="text-xs mt-2 text-slate-500">{getFormattedTimestamp(message.timestamp)}</p>
           </div>
-          <div className="flex items-center gap-2 mt-2" style={{ marginLeft: 0 }}>
-            <button className={getLikeButtonClass(message.id)} onClick={() => handleFeedback(message.id, "like")} aria-label="Like">
-              <ThumbsUp className="w-4 h-4" />
-            </button>
-            <button className={getDislikeButtonClass(message.id)} onClick={() => handleFeedback(message.id, "dislike")} aria-label="Dislike">
-              <ThumbsDown className="w-4 h-4" />
-            </button>
+          <div className="flex items-center justify-between mt-2 px-4" style={{ marginLeft: 0 }}>
+            <div className="flex items-center gap-2">
+              <Tooltip title="Like this response">
+                <button className={getLikeButtonClass(message.id)} onClick={() => handleFeedback(message.id, "like")} aria-label="Like">
+                  <ThumbsUp className="w-4 h-4" />
+                </button>
+              </Tooltip>
+              <Tooltip title="Dislike this response">
+                <button className={getDislikeButtonClass(message.id)} onClick={() => handleFeedback(message.id, "dislike")} aria-label="Dislike">
+                  <ThumbsDown className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            </div>
+            <Tooltip title="Copy message">
+              <CopyButton content={message.content} />
+            </Tooltip>
           </div>
         </div>
       </>
@@ -88,7 +100,32 @@ const MessageArea: React.FC<MessageAreaProps> = ({ currentConversation, aiFeedba
     return (
       <>
         <div className="max-w-[70%] rounded-2xl p-4 bg-emerald-500 text-white">
-          <p className="text-sm">{message.content}</p>
+          {message.type === "image" ? (
+            <div>
+              {/* Parse the content to extract base64 data and filename */}
+              {(() => {
+                const [imageData, filename] = message.content.split("|");
+                return (
+                  <>
+                    <img
+                      src={imageData}
+                      alt="User uploaded"
+                      className="w-full max-h-64 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity duration-200"
+                      onClick={() => {
+                        // Open image in new tab
+                        openImageInNewTab(imageData, filename || "Uploaded Image");
+                      }}
+                      title="Click to view full size"
+                    />
+                    <p className="text-sm">Image uploaded</p>
+                    <p className="text-xs text-emerald-100 mt-1 font-mono">{filename || "Unknown file"}</p>
+                  </>
+                );
+              })()}
+            </div>
+          ) : (
+            <p className="text-sm">{message.content}</p>
+          )}
           <p className="text-xs mt-2 text-emerald-100">{getFormattedTimestamp(message.timestamp)}</p>
         </div>
         <span className="ml-2 flex items-center justify-center self-center">

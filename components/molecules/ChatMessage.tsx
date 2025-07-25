@@ -1,5 +1,6 @@
-import { Brain } from "lucide-react";
 import GradientIcon from "@/components/atoms/GradientIcon";
+import { renderMarkdown } from "@/util/markdown";
+import { Brain } from "lucide-react";
 
 interface ChatMessageProps {
   content: string;
@@ -22,7 +23,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, sender }) => {
         <GradientIcon icon={Brain} size="md" />
       </div>
       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-4 max-w-[80%]">
-        <p className="text-sm whitespace-pre-line">{content}</p>
+        <div className="markdown text-sm text-white">{renderMarkdown(content)}</div>
       </div>
     </div>
   );

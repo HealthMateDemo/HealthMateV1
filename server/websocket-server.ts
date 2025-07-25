@@ -111,6 +111,30 @@ function handleChatMessage(client: Client, message: WebSocketMessage): void {
 function generateAIResponse(userMessage: string, template: "global" | "health" | "mindfull" = "global"): string {
   console.log(`Processing message: "${userMessage}" with template: "${template}"`);
 
+  // Check if this is an image upload message
+  if (userMessage.toLowerCase().includes("image uploaded for analysis")) {
+    return `I've received your image and I'm analyzing it now. Here's what I can help you with:
+
+1. **Image Analysis**
+   • I can identify visible symptoms or conditions
+   • Provide general health observations
+   • Suggest when to consult a healthcare professional
+   • Offer wellness recommendations based on what I see
+
+2. **Important Note**
+   • This analysis is for informational purposes only
+   • Always consult with a qualified healthcare provider for medical advice
+   • I cannot provide definitive diagnoses
+
+3. **What I Can Help With**
+   • General wellness observations
+   • Lifestyle recommendations
+   • Questions about visible symptoms
+   • Guidance on when to seek professional help
+
+Please let me know what specific questions you have about the image, and I'll do my best to provide helpful insights!`;
+  }
+
   // First, check if this is a command request
   const commandResponse = getCommandResponse(userMessage, template);
   if (commandResponse) {

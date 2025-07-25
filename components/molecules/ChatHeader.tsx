@@ -34,6 +34,10 @@ interface ChatHeaderProps {
   setCurrentConversation: React.Dispatch<React.SetStateAction<Conversation | null>>;
   handleAssignCategory: (cat: string) => void;
   handleAssignTemplate: (template: "global" | "health" | "mindfull") => void;
+  notes: string;
+  onNotesChange: (notes: string) => void;
+  isNotesOpen: boolean;
+  onNotesToggle: () => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -47,6 +51,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   setCurrentConversation,
   handleAssignCategory,
   handleAssignTemplate,
+  notes,
+  onNotesChange,
+  isNotesOpen,
+  onNotesToggle,
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
@@ -191,7 +199,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
         <div className="flex items-center space-x-2">
           {renderControls()}
-          <ConversationDropdown onDelete={handleDeleteConversation} />
+          <ConversationDropdown onDelete={handleDeleteConversation} onNotesClick={onNotesToggle} isNotesOpen={isNotesOpen} />
         </div>
       </div>
     </div>

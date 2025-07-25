@@ -19,7 +19,7 @@ const InteractiveChatBox = () => {
     {
       id: "2",
       content:
-        "I understand you're experiencing anxiety and sleep difficulties. Here are some evidence-based strategies that can help:\n\n• Practice deep breathing exercises\n• Limit screen time before bed\n• Establish a consistent sleep routine",
+        "I understand you're experiencing anxiety and sleep difficulties. Here are some evidence-based strategies that can help:\n\n1. Practice deep breathing exercises\n2. Limit screen time before bed\n3. Establish a consistent sleep routine",
       sender: "ai" as const,
       timestamp: new Date(),
     },

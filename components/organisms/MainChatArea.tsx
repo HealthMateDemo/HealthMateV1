@@ -10,6 +10,7 @@ import CategoryFilterSection from "../molecules/CategoryFilterSection";
 import CategoryListSection from "../molecules/CategoryListSection";
 import ChatHeader from "../molecules/ChatHeader";
 import ChatSidebarHeader from "../molecules/ChatSidebarHeader";
+import NotesSidebar from "../molecules/NotesSidebar";
 import RecentMessagesSection from "../molecules/RecentMessagesSection";
 import ConversationList from "./ConversationList";
 import MessageArea from "./MessageArea";
@@ -46,6 +47,30 @@ interface MainChatAreaProps {
 export default function MainChatArea({ onClose, conversations, currentConversation, setConversations, setCurrentConversation }: MainChatAreaProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImageName, setUploadedImageName] = useState<string | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+
+  // Load notes from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedNotes = localStorage.getItem("zenhealth-notes");
+        if (storedNotes) {
+          setNotes(storedNotes);
+        }
+      } catch {}
+    }
+  }, []);
+
+  // Persist notes to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("zenhealth-notes", notes);
+    }
+  }, [notes]);
 
   // Add state for category filter
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -236,15 +261,25 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   // In handleSendMessage, after updating conversations, set currentConversation to the updated object from conversations
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !currentConversation || isLoading) return;
+    if ((!inputMessage.trim() && !uploadedImage) || !currentConversation || isLoading) return;
     setIsLoading(true);
+
+    let messageContent = inputMessage;
+    let messageType: "text" | "image" = "text";
+
+    // If there's an uploaded image, create an image message
+    if (uploadedImage) {
+      // Store both the base64 data and filename in the content
+      messageContent = `${uploadedImage}|${uploadedImageName || "Unknown file"}`;
+      messageType = "image";
+    }
 
     const userMessage: Message = {
       id: generateId(),
-      content: inputMessage,
+      content: messageContent,
       sender: "user",
       timestamp: new Date(),
-      type: "text",
+      type: messageType,
     };
 
     setConversations((prev) => {
@@ -258,11 +293,17 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     });
 
     setInputMessage("");
+    // Clear the uploaded image after sending
+    if (uploadedImage) {
+      setUploadedImage(null);
+      setUploadedImageName(null);
+    }
     setIsTyping(true);
 
+    // Send message to WebSocket
     websocketService.sendMessage({
       type: "message",
-      content: inputMessage,
+      content: messageType === "image" ? "Image uploaded for analysis" : inputMessage,
       sender: "user",
       conversationId: currentConversation.id,
       template: currentConversation.template || "global",
@@ -286,6 +327,91 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   };
 
   const generateId = () => (window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now().toString());
+
+  // Image upload handlers
+  const handleImageUpload = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file");
+      return;
+    }
+
+    // Check file size (limit to 5MB to prevent localStorage issues)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert("Image file is too large. Please upload an image smaller than 5MB.");
+      return;
+    }
+
+    setIsProcessingImage(true);
+
+    // Compress image if it's larger than 1MB
+    if (file.size > 1024 * 1024) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+
+      img.onload = () => {
+        // Calculate new dimensions (max 800px width/height)
+        const maxDimension = 800;
+        let { width, height } = img;
+
+        if (width > height) {
+          if (width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+
+        setUploadedImage(compressedDataUrl);
+        setUploadedImageName(file.name);
+        setIsProcessingImage(false);
+
+        // Clean up the temporary blob URL
+        URL.revokeObjectURL(img.src);
+      };
+
+      img.src = URL.createObjectURL(file);
+    } else {
+      // Convert file to base64 for persistence (no compression needed)
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Data = e.target?.result as string;
+        setUploadedImage(base64Data);
+        setUploadedImageName(file.name);
+        setIsProcessingImage(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (uploadedImage) {
+      // No need to revoke URL since we're using base64 data
+      setUploadedImage(null);
+      setUploadedImageName(null);
+    }
+  };
+
+  // Notes handlers
+  const handleNotesToggle = () => {
+    setIsNotesOpen(!isNotesOpen);
+  };
+
+  const handleNotesChange = (newNotes: string) => {
+    setNotes(newNotes);
+  };
 
   // Add a new category
   const handleAddCategory = () => {
@@ -462,13 +588,27 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           setCurrentConversation={setCurrentConversation}
           handleAssignCategory={handleAssignCategory}
           handleAssignTemplate={handleAssignTemplate}
+          notes={notes}
+          onNotesChange={handleNotesChange}
+          isNotesOpen={isNotesOpen}
+          onNotesToggle={handleNotesToggle}
         />
 
         {/* Messages Area */}
         <MessageArea currentConversation={currentConversation} aiFeedback={aiFeedback} handleFeedback={handleFeedback} isTyping={isTyping} />
 
         {/* Input Area */}
-        <ChatInput inputMessage={inputMessage} setInputMessage={setInputMessage} handleSendMessage={handleSendMessage} isLoading={isLoading} />
+        <ChatInput
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleSendMessage}
+          handleImageUpload={handleImageUpload}
+          isLoading={isLoading}
+          isProcessingImage={isProcessingImage}
+          uploadedImage={uploadedImage}
+          uploadedImageName={uploadedImageName}
+          onRemoveImage={handleRemoveImage}
+        />
       </div>
 
       {/* Settings Portal Dropdown */}
@@ -489,6 +629,9 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         archivedConversations={archivedConversations}
         handleUnarchive={handleUnarchive}
       />
+
+      {/* Notes Sidebar */}
+      <NotesSidebar isOpen={isNotesOpen} onClose={() => setIsNotesOpen(false)} notes={notes} onNotesChange={handleNotesChange} />
     </div>
   );
 }
