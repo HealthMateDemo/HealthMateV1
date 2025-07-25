@@ -146,6 +146,54 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     setSettingsOpen(false);
   };
 
+  // Archived conversations state (persisted in localStorage)
+  const [archivedConversations, setArchivedConversations] = useState<Conversation[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("zenhealth-archived-conversations");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return parsed.map((conv: any) => ({
+            ...conv,
+            createdAt: new Date(conv.createdAt),
+            updatedAt: new Date(conv.updatedAt),
+            messages:
+              conv.messages?.map((msg: any) => ({
+                ...msg,
+                timestamp: new Date(msg.timestamp),
+              })) || [],
+          }));
+        }
+      } catch {}
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("zenhealth-archived-conversations", JSON.stringify(archivedConversations));
+    }
+  }, [archivedConversations]);
+
+  const handleArchive = (conversationId: string) => {
+    const conversationToArchive = conversations.find((c) => c.id === conversationId);
+    if (conversationToArchive) {
+      setArchivedConversations((prev) => [...prev, conversationToArchive]);
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      if (currentConversation?.id === conversationId) {
+        setCurrentConversation(null);
+      }
+    }
+  };
+
+  const handleUnarchive = (conversationId: string) => {
+    const conversationToUnarchive = archivedConversations.find((c) => c.id === conversationId);
+    if (conversationToUnarchive) {
+      setConversations((prev) => [conversationToUnarchive, ...prev]);
+      setArchivedConversations((prev) => prev.filter((c) => c.id !== conversationId));
+    }
+  };
+
   // Count likes/dislikes for current conversation
   const aiMessages = currentConversation?.messages.filter((m) => m.sender === "ai") || [];
   const likeCount = aiMessages.filter((m) => aiFeedback[m.id] === "like").length;
@@ -325,6 +373,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     localStorage.removeItem("zenhealth-user-categories");
     localStorage.removeItem("zenhealth-ai-feedback");
     localStorage.removeItem("zenhealth-favorites");
+    localStorage.removeItem("zenhealth-archived-conversations");
     window.location.reload();
   };
 
@@ -364,6 +413,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
             aiFeedback={aiFeedback}
             favorites={favorites}
             toggleFavorite={toggleFavorite}
+            handleArchive={handleArchive}
           />
         </ScrollArea>
 
@@ -432,6 +482,8 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         showLessFavorites={showLessFavorites}
         aiFeedback={aiFeedback}
         handleResetAll={handleResetAll}
+        archivedConversations={archivedConversations}
+        handleUnarchive={handleUnarchive}
       />
     </div>
   );

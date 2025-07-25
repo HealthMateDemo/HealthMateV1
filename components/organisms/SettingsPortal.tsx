@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import FavoritesChatSection from "../molecules/FavoritesChatSection";
+import ArchiveConversation from "./ArchiveConversation";
 
 interface Conversation {
   id: string;
@@ -26,6 +27,8 @@ interface SettingsPortalProps {
   showLessFavorites: () => void;
   aiFeedback: { [id: string]: "like" | "dislike" | undefined };
   handleResetAll: () => void;
+  archivedConversations: Conversation[];
+  handleUnarchive: (conversationId: string) => void;
 }
 
 const SettingsPortal: React.FC<SettingsPortalProps> = ({
@@ -42,6 +45,8 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({
   showLessFavorites,
   aiFeedback,
   handleResetAll,
+  archivedConversations,
+  handleUnarchive,
 }) => {
   if (!settingsOpen || typeof window === "undefined") return null;
   return ReactDOM.createPortal(
@@ -69,6 +74,9 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({
           showLessFavorites={showLessFavorites}
           aiFeedback={aiFeedback}
         />
+        <div className="mt-6 border-t border-slate-200 pt-4">
+          <ArchiveConversation archivedConversations={archivedConversations} handleUnarchive={handleUnarchive} aiFeedback={aiFeedback} />
+        </div>
         <div className="mt-6">
           <span className="text-xs text-slate-400">Danger Zone</span>
           <button

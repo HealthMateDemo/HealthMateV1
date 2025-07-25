@@ -1,7 +1,7 @@
 import CategoryBadge from "@/components/atoms/CategoryBadge";
 import NumberBadge from "@/components/atoms/NumberBadge";
 import TemplateCategory from "@/components/atoms/TemplateCategory";
-import { Brain, Heart as HeartIcon, MessageCircle, Save, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Archive, Brain, Heart as HeartIcon, MessageCircle, Save, ThumbsDown, ThumbsUp } from "lucide-react";
 import React from "react";
 
 interface Message {
@@ -30,9 +30,18 @@ interface ConversationListProps {
   aiFeedback: { [id: string]: "like" | "dislike" | undefined };
   favorites: string[];
   toggleFavorite: (conversationId: string) => void;
+  handleArchive: (conversationId: string) => void;
 }
 
-const ConversationList: React.FC<ConversationListProps> = ({ filteredConversations, currentConversation, handleSelectConversation, aiFeedback, favorites, toggleFavorite }) => {
+const ConversationList: React.FC<ConversationListProps> = ({
+  filteredConversations,
+  currentConversation,
+  handleSelectConversation,
+  aiFeedback,
+  favorites,
+  toggleFavorite,
+  handleArchive,
+}) => {
   const conversationCount = filteredConversations.length;
 
   return (
@@ -82,17 +91,31 @@ const ConversationList: React.FC<ConversationListProps> = ({ filteredConversatio
               </span>
             </p>
             <p className="text-xs text-slate-400">{conversation.updatedAt instanceof Date ? conversation.updatedAt.toLocaleDateString("en-US") : ""}</p>
-            {/* Heart (favorite) icon at bottom right */}
-            <button
-              className="absolute bottom-2 right-2 p-1 rounded-full bg-white/80 hover:bg-emerald-100 transition"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFavorite(conversation.id);
-              }}
-              aria-label={favorites.includes(conversation.id) ? "Unfavorite" : "Favorite"}
-            >
-              <HeartIcon className={`w-4 h-4 ${favorites.includes(conversation.id) ? "fill-emerald-500 text-emerald-500" : "text-slate-400"}`} />
-            </button>
+            {/* Action buttons at bottom right */}
+            <div className="absolute bottom-2 right-2 flex items-center gap-1">
+              {/* Archive icon */}
+              <button
+                className="p-1 rounded-full bg-white/80 hover:bg-slate-100 transition"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleArchive(conversation.id);
+                }}
+                aria-label="Archive conversation"
+              >
+                <Archive className="w-4 h-4 text-slate-400 hover:text-slate-600" />
+              </button>
+              {/* Heart (favorite) icon */}
+              <button
+                className="p-1 rounded-full bg-white/80 hover:bg-emerald-100 transition"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(conversation.id);
+                }}
+                aria-label={favorites.includes(conversation.id) ? "Unfavorite" : "Favorite"}
+              >
+                <HeartIcon className={`w-4 h-4 ${favorites.includes(conversation.id) ? "fill-emerald-500 text-emerald-500" : "text-slate-400"}`} />
+              </button>
+            </div>
           </div>
         );
       })}
