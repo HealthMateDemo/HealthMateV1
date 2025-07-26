@@ -9,6 +9,7 @@ interface InfoSidebarProps {
   emails: SavedEmail[];
   onUrlsChange: (urls: SavedUrl[]) => void;
   onEmailsChange: (emails: SavedEmail[]) => void;
+  conversationId?: string;
 }
 
 interface SavedUrl {
@@ -27,39 +28,54 @@ interface SavedEmail {
   conversationId?: string;
 }
 
-const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose, urls, emails, onUrlsChange, onEmailsChange }) => {
+const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose, urls, emails, onUrlsChange, onEmailsChange, conversationId }) => {
   const [copied, setCopied] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [localUrls, setLocalUrls] = useState<SavedUrl[]>(urls);
+  const [localEmails, setLocalEmails] = useState<SavedEmail[]>(emails);
+  const [newUrl, setNewUrl] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
-  // Load saved URLs and emails from localStorage
+  // Update local state when props change
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
+    setLocalUrls(urls);
+    setLocalEmails(emails);
+  }, [urls, emails]);
+
+  // Load saved data from localStorage when sidebar opens
+  React.useEffect(() => {
+    if (isOpen && typeof window !== "undefined") {
       try {
-        // Load URLs
+        // Load URLs for this conversation
         const storedUrls = localStorage.getItem("zenhealth-urls-history");
         if (storedUrls) {
           const parsed = JSON.parse(storedUrls);
-          const urlsWithDates = parsed.map((url: any) => ({
-            ...url,
-            timestamp: new Date(url.timestamp),
-          }));
-          onUrlsChange(urlsWithDates);
+          const conversationUrls = parsed
+            .map((url: any) => ({
+              ...url,
+              timestamp: new Date(url.timestamp),
+            }))
+            .filter((url: any) => url.conversationId === conversationId);
+          setLocalUrls(conversationUrls);
         }
 
-        // Load emails
+        // Load emails for this conversation
         const storedEmails = localStorage.getItem("zenhealth-emails-history");
         if (storedEmails) {
           const parsed = JSON.parse(storedEmails);
-          const emailsWithDates = parsed.map((email: any) => ({
-            ...email,
-            timestamp: new Date(email.timestamp),
-          }));
-          onEmailsChange(emailsWithDates);
+          const conversationEmails = parsed
+            .map((email: any) => ({
+              ...email,
+              timestamp: new Date(email.timestamp),
+            }))
+            .filter((email: any) => email.conversationId === conversationId);
+          setLocalEmails(conversationEmails);
         }
       } catch (error) {
         console.error("Error loading info from localStorage:", error);
       }
     }
-  }, []);
+  }, [isOpen, conversationId]);
 
   const handleCopyUrl = async (url: string) => {
     try {
@@ -86,22 +102,84 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose, urls, emails
   };
 
   const handleDeleteUrl = (urlId: string) => {
-    const updatedUrls = urls.filter((url) => url.id !== urlId);
-    onUrlsChange(updatedUrls);
-    localStorage.setItem("zenhealth-urls-history", JSON.stringify(updatedUrls));
+    const updatedUrls = localUrls.filter((url) => url.id !== urlId);
+    setLocalUrls(updatedUrls);
   };
 
   const handleDeleteEmail = (emailId: string) => {
-    const updatedEmails = emails.filter((email) => email.id !== emailId);
-    onEmailsChange(updatedEmails);
+    const updatedEmails = localEmails.filter((email) => email.id !== emailId);
+    setLocalEmails(updatedEmails);
+  };
+
+  const handleAddUrl = () => {
+    if (newUrl.trim()) {
+      const newSavedUrl: SavedUrl = {
+        id: Date.now().toString(),
+        url: newUrl.trim(),
+        title: "Manual URL entry",
+        timestamp: new Date(),
+        conversationId: conversationId,
+      };
+      setLocalUrls([newSavedUrl, ...localUrls]);
+      setNewUrl("");
+    }
+  };
+
+  const handleAddEmail = () => {
+    if (newEmail.trim()) {
+      const newSavedEmail: SavedEmail = {
+        id: Date.now().toString(),
+        email: newEmail.trim(),
+        title: "Manual email entry",
+        timestamp: new Date(),
+        conversationId: conversationId,
+      };
+      setLocalEmails([newSavedEmail, ...localEmails]);
+      setNewEmail("");
+    }
+  };
+
+  const handleSave = () => {
+    // Ensure all local items have the correct conversationId
+    const urlsWithConversationId = localUrls.map((url) => ({
+      ...url,
+      conversationId: conversationId,
+    }));
+
+    const emailsWithConversationId = localEmails.map((email) => ({
+      ...email,
+      conversationId: conversationId,
+    }));
+
+    // Get all existing data from localStorage
+    const allUrls = JSON.parse(localStorage.getItem("zenhealth-urls-history") || "[]");
+    const allEmails = JSON.parse(localStorage.getItem("zenhealth-emails-history") || "[]");
+
+    // Remove old data for this conversation
+    const filteredUrls = allUrls.filter((url: any) => url.conversationId !== conversationId);
+    const filteredEmails = allEmails.filter((email: any) => email.conversationId !== conversationId);
+
+    // Add new data for this conversation
+    const updatedUrls = [...urlsWithConversationId, ...filteredUrls];
+    const updatedEmails = [...emailsWithConversationId, ...filteredEmails];
+
+    // Save to localStorage
+    localStorage.setItem("zenhealth-urls-history", JSON.stringify(updatedUrls));
     localStorage.setItem("zenhealth-emails-history", JSON.stringify(updatedEmails));
+
+    // Update parent state
+    onUrlsChange(urlsWithConversationId);
+    onEmailsChange(emailsWithConversationId);
+
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const formatTimestamp = (timestamp: Date) => {
     return timestamp.toLocaleString();
   };
 
-  const totalCount = urls.length + emails.length;
+  const totalCount = localUrls.length + localEmails.length;
 
   return (
     <>
@@ -126,17 +204,70 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose, urls, emails
 
         {/* Content */}
         <div className="flex flex-col h-full overflow-y-auto">
+          {/* Toolbar */}
+          <div className="p-4 border-b border-slate-200">
+            <div className="space-y-3">
+              {/* Add URL */}
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  placeholder="Add a URL..."
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddUrl()}
+                />
+                <Button onClick={handleAddUrl} variant="outline" size="sm" disabled={!newUrl.trim()}>
+                  Add URL
+                </Button>
+              </div>
+
+              {/* Add Email */}
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="Add an email..."
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddEmail()}
+                />
+                <Button onClick={handleAddEmail} variant="outline" size="sm" disabled={!newEmail.trim()}>
+                  Add Email
+                </Button>
+              </div>
+
+              {/* Save Button */}
+              <Button
+                onClick={handleSave}
+                variant="default"
+                size="sm"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                disabled={localUrls.length === urls.length && localEmails.length === emails.length && !newUrl.trim() && !newEmail.trim()}
+              >
+                {saved ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Saved!
+                  </>
+                ) : (
+                  <>Save Resources</>
+                )}
+              </Button>
+            </div>
+          </div>
+
           {totalCount > 0 ? (
             <>
               {/* URLs Section */}
-              {urls.length > 0 && (
+              {localUrls.length > 0 && (
                 <div className="p-4 border-b border-slate-200">
                   <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center">
                     <Globe className="w-4 h-4 mr-2" />
-                    URLs ({urls.length})
+                    URLs ({localUrls.length})
                   </h3>
                   <div className="space-y-2">
-                    {urls.map((url) => (
+                    {localUrls.map((url) => (
                       <div key={url.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
@@ -169,14 +300,14 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose, urls, emails
               )}
 
               {/* Emails Section */}
-              {emails.length > 0 && (
+              {localEmails.length > 0 && (
                 <div className="p-4">
                   <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center">
                     <Mail className="w-4 h-4 mr-2" />
-                    Email Addresses ({emails.length})
+                    Email Addresses ({localEmails.length})
                   </h3>
                   <div className="space-y-2">
-                    {emails.map((email) => (
+                    {localEmails.map((email) => (
                       <div key={email.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">

@@ -111,6 +111,28 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           setSavedImages(imagesWithDates);
         }
 
+        // Load URLs
+        const storedUrls = localStorage.getItem("zenhealth-urls-history");
+        if (storedUrls) {
+          const parsed = JSON.parse(storedUrls);
+          const urlsWithDates = parsed.map((url: any) => ({
+            ...url,
+            timestamp: new Date(url.timestamp),
+          }));
+          setSavedUrls(urlsWithDates);
+        }
+
+        // Load emails
+        const storedEmails = localStorage.getItem("zenhealth-emails-history");
+        if (storedEmails) {
+          const parsed = JSON.parse(storedEmails);
+          const emailsWithDates = parsed.map((email: any) => ({
+            ...email,
+            timestamp: new Date(email.timestamp),
+          }));
+          setSavedEmails(emailsWithDates);
+        }
+
         // Load sidebar state
         const storedSidebarState = localStorage.getItem("zenhealth-notes-sidebar-open");
         if (storedSidebarState) {
@@ -154,34 +176,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       }
     }
   }, [conversations, savedImages.length]);
-
-  // Extract URLs and emails from existing conversations and add to saved info
-  useEffect(() => {
-    if (notesLoadedRef.current && savedUrls.length === 0 && savedEmails.length === 0) {
-      const extractedUrls: SavedUrl[] = [];
-      const extractedEmails: SavedEmail[] = [];
-
-      conversations.forEach((conversation) => {
-        conversation.messages.forEach((message) => {
-          if (message.sender === "ai" && message.type === "text") {
-            const { urls, emails } = extractUrlsAndEmails(message.content);
-            extractedUrls.push(...urls);
-            extractedEmails.push(...emails);
-          }
-        });
-      });
-
-      if (extractedUrls.length > 0) {
-        setSavedUrls(extractedUrls);
-        localStorage.setItem("zenhealth-urls-history", JSON.stringify(extractedUrls));
-      }
-
-      if (extractedEmails.length > 0) {
-        setSavedEmails(extractedEmails);
-        localStorage.setItem("zenhealth-emails-history", JSON.stringify(extractedEmails));
-      }
-    }
-  }, [conversations, savedUrls.length, savedEmails.length]);
 
   // Ensure notes are available when currentConversation changes
   useEffect(() => {
@@ -440,7 +434,9 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         conversationId: currentConversation.id,
       };
 
-      const updatedImages = [newSavedImage, ...savedImages.slice(0, 9)]; // Keep last 10 images
+      // Get all images from localStorage and add the new one
+      const allImages = [...savedImages];
+      const updatedImages = [newSavedImage, ...allImages.slice(0, 9)]; // Keep last 10 images
       setSavedImages(updatedImages);
       localStorage.setItem("zenhealth-images-history", JSON.stringify(updatedImages));
     }
@@ -578,7 +574,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   // Get current conversation's notes count
   const getCurrentNotesCount = () => {
-    return getNotesCount();
+    return getNotesCount(currentConversation?.id);
   };
 
   // Images handlers
@@ -592,7 +588,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   // Get current images count
   const getCurrentImagesCount = () => {
-    return getImagesCount();
+    return getImagesCount(currentConversation?.id);
   };
 
   // Info handlers
@@ -610,7 +606,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
   // Get current info count
   const getCurrentInfoCount = () => {
-    return getInfoCount();
+    return getInfoCount(currentConversation?.id);
   };
 
   // Add a new category
@@ -727,23 +723,6 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         return updated;
       });
 
-      // Extract and save URLs and emails from AI response
-      if (message.content) {
-        const { urls, emails } = extractUrlsAndEmails(message.content);
-
-        if (urls.length > 0) {
-          const updatedUrls = [...urls, ...savedUrls.slice(0, 9)]; // Keep last 10 URLs
-          setSavedUrls(updatedUrls);
-          localStorage.setItem("zenhealth-urls-history", JSON.stringify(updatedUrls));
-        }
-
-        if (emails.length > 0) {
-          const updatedEmails = [...emails, ...savedEmails.slice(0, 9)]; // Keep last 10 emails
-          setSavedEmails(updatedEmails);
-          localStorage.setItem("zenhealth-emails-history", JSON.stringify(updatedEmails));
-        }
-      }
-
       setIsTyping(false);
       setIsLoading(false);
     } else if (message.type === "typing") {
@@ -764,6 +743,9 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     localStorage.removeItem("zenhealth-notes");
     localStorage.removeItem("zenhealth-notes-sidebar-open");
     localStorage.removeItem("zenhealth-notes-history"); // Clear notes history
+    localStorage.removeItem("zenhealth-images-history"); // Clear images history
+    localStorage.removeItem("zenhealth-urls-history"); // Clear URLs history
+    localStorage.removeItem("zenhealth-emails-history"); // Clear emails history
     window.location.reload();
   };
 
@@ -903,6 +885,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         onClose={() => setIsNotesOpen(false)}
         notes={getCurrentNotes()}
         onNotesChange={handleNotesChange}
+        conversationId={currentConversation?.id}
       />
 
       {/* Images Sidebar */}
@@ -912,6 +895,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         onClose={() => setIsImagesOpen(false)}
         images={savedImages}
         onImagesChange={handleImagesChange}
+        conversationId={currentConversation?.id}
       />
 
       {/* Info Sidebar */}
@@ -923,6 +907,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         emails={savedEmails}
         onUrlsChange={handleUrlsChange}
         onEmailsChange={handleEmailsChange}
+        conversationId={currentConversation?.id}
       />
     </div>
   );

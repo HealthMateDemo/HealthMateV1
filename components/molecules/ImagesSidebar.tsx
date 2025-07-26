@@ -7,6 +7,7 @@ interface ImagesSidebarProps {
   onClose: () => void;
   images: SavedImage[];
   onImagesChange: (images: SavedImage[]) => void;
+  conversationId?: string;
 }
 
 interface SavedImage {
@@ -17,7 +18,7 @@ interface SavedImage {
   conversationId?: string;
 }
 
-const ImagesSidebar: React.FC<ImagesSidebarProps> = ({ isOpen, onClose, images, onImagesChange }) => {
+const ImagesSidebar: React.FC<ImagesSidebarProps> = ({ isOpen, onClose, images, onImagesChange, conversationId }) => {
   const [copied, setCopied] = useState(false);
 
   // Load saved images history from localStorage
@@ -27,18 +28,27 @@ const ImagesSidebar: React.FC<ImagesSidebarProps> = ({ isOpen, onClose, images, 
         const storedHistory = localStorage.getItem("zenhealth-images-history");
         if (storedHistory) {
           const parsed = JSON.parse(storedHistory);
-          // Convert timestamp strings back to Date objects
-          const historyWithDates = parsed.map((image: any) => ({
-            ...image,
-            timestamp: new Date(image.timestamp),
-          }));
+          // Convert timestamp strings back to Date objects and filter by conversation
+          const historyWithDates = parsed
+            .map((image: any) => ({
+              ...image,
+              timestamp: new Date(image.timestamp),
+            }))
+            .filter((image: any) => {
+              if (!conversationId) {
+                // If no conversationId, only show items without conversationId (global items)
+                return !image.conversationId;
+              }
+              // If conversationId exists, only show items for this conversation
+              return image.conversationId === conversationId;
+            });
           onImagesChange(historyWithDates);
         }
       } catch (error) {
         console.error("Error loading images history:", error);
       }
     }
-  }, []);
+  }, [conversationId]);
 
   const handleCopyImageUrl = async (imageUrl: string) => {
     try {

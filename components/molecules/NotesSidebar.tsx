@@ -8,6 +8,7 @@ interface NotesSidebarProps {
   onClose: () => void;
   notes: string;
   onNotesChange: (notes: string) => void;
+  conversationId?: string;
 }
 
 interface SavedNote {
@@ -15,9 +16,10 @@ interface SavedNote {
   content: string;
   timestamp: Date;
   preview: string;
+  conversationId?: string;
 }
 
-const NotesSidebar: React.FC<NotesSidebarProps> = ({ isOpen, onClose, notes, onNotesChange }) => {
+const NotesSidebar: React.FC<NotesSidebarProps> = ({ isOpen, onClose, notes, onNotesChange, conversationId }) => {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [localNotes, setLocalNotes] = useState(notes);
@@ -36,18 +38,27 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ isOpen, onClose, notes, onN
         const storedHistory = localStorage.getItem("zenhealth-notes-history");
         if (storedHistory) {
           const parsed = JSON.parse(storedHistory);
-          // Convert timestamp strings back to Date objects
-          const historyWithDates = parsed.map((note: any) => ({
-            ...note,
-            timestamp: new Date(note.timestamp),
-          }));
+          // Convert timestamp strings back to Date objects and filter by conversation
+          const historyWithDates = parsed
+            .map((note: any) => ({
+              ...note,
+              timestamp: new Date(note.timestamp),
+            }))
+            .filter((note: any) => {
+              if (!conversationId) {
+                // If no conversationId, only show items without conversationId (global items)
+                return !note.conversationId;
+              }
+              // If conversationId exists, only show items for this conversation
+              return note.conversationId === conversationId;
+            });
           setSavedNotes(historyWithDates);
         }
       } catch (error) {
         console.error("Error loading notes history:", error);
       }
     }
-  }, []);
+  }, [conversationId]);
 
   const handleCopy = async () => {
     try {
@@ -98,6 +109,7 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ isOpen, onClose, notes, onN
         content: localNotes,
         timestamp: new Date(),
         preview: localNotes.length > 50 ? localNotes.substring(0, 50) + "..." : localNotes,
+        conversationId: conversationId,
       };
       updatedHistory = [newSavedNote, ...savedNotes.slice(0, 9)]; // Keep last 10 notes
     }
