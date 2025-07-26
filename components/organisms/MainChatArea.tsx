@@ -3,6 +3,8 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useShowMore from "@/hooks/useShowMore";
 import { WebSocketMessage, websocketService } from "@/lib/websocket";
+import { getImagesCount } from "@/util/imagesNumber";
+import { getNotesCount } from "@/util/notesNumber";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CategoryCreate from "../atoms/CategoryCreate";
 import ChatInput from "../atoms/ChatInput";
@@ -10,6 +12,7 @@ import CategoryFilterSection from "../molecules/CategoryFilterSection";
 import CategoryListSection from "../molecules/CategoryListSection";
 import ChatHeader from "../molecules/ChatHeader";
 import ChatSidebarHeader from "../molecules/ChatSidebarHeader";
+import ImagesSidebar from "../molecules/ImagesSidebar";
 import NotesSidebar from "../molecules/NotesSidebar";
 import RecentMessagesSection from "../molecules/RecentMessagesSection";
 import ConversationList from "./ConversationList";
@@ -36,6 +39,14 @@ interface Conversation {
   template?: "global" | "health" | "mindfull";
 }
 
+interface SavedImage {
+  id: string;
+  src: string;
+  name: string;
+  timestamp: Date;
+  conversationId?: string;
+}
+
 interface MainChatAreaProps {
   onClose: () => void;
   conversations: Conversation[];
@@ -53,8 +64,10 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   const [notes, setNotes] = useState<{ [conversationId: string]: string }>({});
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const notesLoadedRef = useRef(false);
+  const [savedImages, setSavedImages] = useState<SavedImage[]>([]);
+  const [isImagesOpen, setIsImagesOpen] = useState(false);
 
-  // Load notes and sidebar state from localStorage
+  // Load notes, images, and sidebar state from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -63,6 +76,18 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         if (storedNotes) {
           const parsedNotes = JSON.parse(storedNotes);
           setNotes(parsedNotes);
+        }
+
+        // Load images
+        const storedImages = localStorage.getItem("zenhealth-images-history");
+        if (storedImages) {
+          const parsedImages = JSON.parse(storedImages);
+          // Convert timestamp strings back to Date objects
+          const imagesWithDates = parsedImages.map((image: any) => ({
+            ...image,
+            timestamp: new Date(image.timestamp),
+          }));
+          setSavedImages(imagesWithDates);
         }
 
         // Load sidebar state
@@ -74,11 +99,40 @@ export default function MainChatArea({ onClose, conversations, currentConversati
 
         notesLoadedRef.current = true;
       } catch (error) {
-        console.error("Error loading notes from localStorage:", error);
+        console.error("Error loading data from localStorage:", error);
         notesLoadedRef.current = true;
       }
     }
   }, []);
+
+  // Extract images from existing conversations and add to saved images
+  useEffect(() => {
+    if (notesLoadedRef.current && savedImages.length === 0) {
+      const extractedImages: SavedImage[] = [];
+
+      conversations.forEach((conversation) => {
+        conversation.messages.forEach((message) => {
+          if (message.type === "image") {
+            const [imageSrc, imageName] = message.content.split("|");
+            if (imageSrc && imageName) {
+              extractedImages.push({
+                id: generateId(),
+                src: imageSrc,
+                name: imageName,
+                timestamp: message.timestamp,
+                conversationId: conversation.id,
+              });
+            }
+          }
+        });
+      });
+
+      if (extractedImages.length > 0) {
+        setSavedImages(extractedImages);
+        localStorage.setItem("zenhealth-images-history", JSON.stringify(extractedImages));
+      }
+    }
+  }, [conversations, savedImages.length]);
 
   // Ensure notes are available when currentConversation changes
   useEffect(() => {
@@ -327,6 +381,21 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       return updated;
     });
 
+    // Save image to images history if it's an image message
+    if (messageType === "image" && uploadedImage) {
+      const newSavedImage: SavedImage = {
+        id: generateId(),
+        src: uploadedImage,
+        name: uploadedImageName || "Unknown file",
+        timestamp: new Date(),
+        conversationId: currentConversation.id,
+      };
+
+      const updatedImages = [newSavedImage, ...savedImages.slice(0, 9)]; // Keep last 10 images
+      setSavedImages(updatedImages);
+      localStorage.setItem("zenhealth-images-history", JSON.stringify(updatedImages));
+    }
+
     setInputMessage("");
     // Clear the uploaded image after sending
     if (uploadedImage) {
@@ -456,6 +525,25 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   const getCurrentNotes = () => {
     const currentNotes = currentConversation ? notes[currentConversation.id] || "" : "";
     return currentNotes;
+  };
+
+  // Get current conversation's notes count
+  const getCurrentNotesCount = () => {
+    return getNotesCount();
+  };
+
+  // Images handlers
+  const handleImagesToggle = () => {
+    setIsImagesOpen(!isImagesOpen);
+  };
+
+  const handleImagesChange = (newImages: SavedImage[]) => {
+    setSavedImages(newImages);
+  };
+
+  // Get current images count
+  const getCurrentImagesCount = () => {
+    return getImagesCount();
   };
 
   // Add a new category
@@ -631,6 +719,8 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           userCategories={userCategories}
           likeCount={likeCount}
           dislikeCount={dislikeCount}
+          notesCount={getCurrentNotesCount()}
+          imagesCount={getCurrentImagesCount()}
           onClose={onClose}
           setConversations={setConversations}
           setCurrentConversation={setCurrentConversation}
@@ -638,6 +728,8 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           handleAssignTemplate={handleAssignTemplate}
           isNotesOpen={isNotesOpen}
           onNotesToggle={handleNotesToggle}
+          isImagesOpen={isImagesOpen}
+          onImagesToggle={handleImagesToggle}
         />
 
         {/* Messages Area */}
@@ -683,6 +775,15 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         onClose={() => setIsNotesOpen(false)}
         notes={getCurrentNotes()}
         onNotesChange={handleNotesChange}
+      />
+
+      {/* Images Sidebar */}
+      <ImagesSidebar
+        key={`images-${currentConversation?.id || "no-conversation"}`}
+        isOpen={isImagesOpen}
+        onClose={() => setIsImagesOpen(false)}
+        images={savedImages}
+        onImagesChange={handleImagesChange}
       />
     </div>
   );

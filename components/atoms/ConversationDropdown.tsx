@@ -1,14 +1,16 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, StickyNote, Trash2 } from "lucide-react";
+import { Image, MoreVertical, StickyNote, Trash2 } from "lucide-react";
 import React from "react";
 
 interface ConversationDropdownProps {
   onDelete: () => void;
   onNotesClick: () => void;
+  onImagesClick: () => void;
   isNotesOpen: boolean;
+  isImagesOpen: boolean;
 }
 
-const ConversationDropdown: React.FC<ConversationDropdownProps> = ({ onDelete, onNotesClick, isNotesOpen }) => {
+const ConversationDropdown: React.FC<ConversationDropdownProps> = ({ onDelete, onNotesClick, onImagesClick, isNotesOpen, isImagesOpen }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -24,6 +26,10 @@ const ConversationDropdown: React.FC<ConversationDropdownProps> = ({ onDelete, o
         <DropdownMenuItem onClick={onNotesClick} className={`focus:bg-emerald-50 focus:text-emerald-700 ${isNotesOpen ? "bg-emerald-50 text-emerald-700" : "text-slate-700"}`}>
           <StickyNote className="w-4 h-4 mr-2" />
           Notes
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onImagesClick} className={`focus:bg-emerald-50 focus:text-emerald-700 ${isImagesOpen ? "bg-emerald-50 text-emerald-700" : "text-slate-700"}`}>
+          <Image className="w-4 h-4 mr-2" />
+          Images
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

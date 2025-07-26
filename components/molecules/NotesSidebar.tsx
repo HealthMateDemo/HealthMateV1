@@ -202,12 +202,12 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ isOpen, onClose, notes, onN
           )}
 
           {/* Textarea */}
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-4 mb-4">
             <Textarea
               value={localNotes}
               onChange={(e) => setLocalNotes(e.target.value)}
               placeholder="Add your notes here... You can paste copied messages, thoughts, or any other information you want to keep track of."
-              className="h-full resize-none border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 border-b-2"
+              className="h-full resize-none border border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
             />
           </div>
 

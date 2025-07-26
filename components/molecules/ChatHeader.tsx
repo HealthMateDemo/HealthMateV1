@@ -1,8 +1,10 @@
 import ConversationDropdown from "@/components/atoms/ConversationDropdown";
 import GradientIcon from "@/components/atoms/GradientIcon";
+import NotesIcon from "@/components/atoms/NotesIcon";
 import TemplateCategory from "@/components/atoms/TemplateCategory";
 import { Brain, Heart as HeartIcon, ThumbsDown, ThumbsUp } from "lucide-react";
 import React, { useState } from "react";
+import ImagesIcon from "../atoms/ImagesIcon";
 
 interface Message {
   id: string;
@@ -29,6 +31,8 @@ interface ChatHeaderProps {
   userCategories: string[];
   likeCount: number;
   dislikeCount: number;
+  notesCount: number;
+  imagesCount: number;
   onClose: () => void;
   setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>;
   setCurrentConversation: React.Dispatch<React.SetStateAction<Conversation | null>>;
@@ -36,6 +40,8 @@ interface ChatHeaderProps {
   handleAssignTemplate: (template: "global" | "health" | "mindfull") => void;
   isNotesOpen: boolean;
   onNotesToggle: () => void;
+  isImagesOpen: boolean;
+  onImagesToggle: () => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -44,6 +50,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   userCategories,
   likeCount,
   dislikeCount,
+  notesCount,
+  imagesCount,
   onClose,
   setConversations,
   setCurrentConversation,
@@ -51,6 +59,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   handleAssignTemplate,
   isNotesOpen,
   onNotesToggle,
+  isImagesOpen,
+  onImagesToggle,
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
@@ -179,6 +189,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <ThumbsDown className="w-4 h-4 text-red-500 ml-2" />
           <span className="text-xs text-red-700 font-semibold">{dislikeCount}</span>
         </span>
+        <ImagesIcon count={imagesCount} onClick={onImagesToggle} isActive={isImagesOpen} />
+        <NotesIcon count={notesCount} onClick={onNotesToggle} isActive={isNotesOpen} />
       </div>
     );
   };
@@ -195,7 +207,13 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
         <div className="flex items-center space-x-2">
           {renderControls()}
-          <ConversationDropdown onDelete={handleDeleteConversation} onNotesClick={onNotesToggle} isNotesOpen={isNotesOpen} />
+          <ConversationDropdown
+            onDelete={handleDeleteConversation}
+            onNotesClick={onNotesToggle}
+            onImagesClick={onImagesToggle}
+            isNotesOpen={isNotesOpen}
+            isImagesOpen={isImagesOpen}
+          />
         </div>
       </div>
     </div>
