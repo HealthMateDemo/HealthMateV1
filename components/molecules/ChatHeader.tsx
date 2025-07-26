@@ -1,10 +1,11 @@
 import ConversationDropdown from "@/components/atoms/ConversationDropdown";
 import GradientIcon from "@/components/atoms/GradientIcon";
+import ImagesIcon from "@/components/atoms/ImagesIcon";
+import InfoIcon from "@/components/atoms/InfoIcon";
 import NotesIcon from "@/components/atoms/NotesIcon";
 import TemplateCategory from "@/components/atoms/TemplateCategory";
 import { Brain, Heart as HeartIcon, ThumbsDown, ThumbsUp } from "lucide-react";
 import React, { useState } from "react";
-import ImagesIcon from "../atoms/ImagesIcon";
 
 interface Message {
   id: string;
@@ -33,6 +34,7 @@ interface ChatHeaderProps {
   dislikeCount: number;
   notesCount: number;
   imagesCount: number;
+  infoCount: number;
   onClose: () => void;
   setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>;
   setCurrentConversation: React.Dispatch<React.SetStateAction<Conversation | null>>;
@@ -42,6 +44,8 @@ interface ChatHeaderProps {
   onNotesToggle: () => void;
   isImagesOpen: boolean;
   onImagesToggle: () => void;
+  isInfoOpen: boolean;
+  onInfoToggle: () => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -52,6 +56,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   dislikeCount,
   notesCount,
   imagesCount,
+  infoCount,
   onClose,
   setConversations,
   setCurrentConversation,
@@ -61,6 +66,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onNotesToggle,
   isImagesOpen,
   onImagesToggle,
+  isInfoOpen,
+  onInfoToggle,
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
@@ -190,6 +197,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <span className="text-xs text-red-700 font-semibold">{dislikeCount}</span>
         </span>
         <ImagesIcon count={imagesCount} onClick={onImagesToggle} isActive={isImagesOpen} />
+        <InfoIcon count={infoCount} onClick={onInfoToggle} isActive={isInfoOpen} />
         <NotesIcon count={notesCount} onClick={onNotesToggle} isActive={isNotesOpen} />
       </div>
     );
@@ -211,8 +219,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             onDelete={handleDeleteConversation}
             onNotesClick={onNotesToggle}
             onImagesClick={onImagesToggle}
+            onInfoClick={onInfoToggle}
             isNotesOpen={isNotesOpen}
             isImagesOpen={isImagesOpen}
+            isInfoOpen={isInfoOpen}
           />
         </div>
       </div>

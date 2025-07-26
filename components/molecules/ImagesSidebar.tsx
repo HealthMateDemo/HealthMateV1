@@ -84,7 +84,7 @@ const ImagesSidebar: React.FC<ImagesSidebarProps> = ({ isOpen, onClose, images, 
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full max-w-[600px] w-full bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out border-l border-slate-200 ${
+        className={`fixed top-0 right-0 h-full max-w-[600px] w-full bg-white  z-50 transform transition-transform duration-300 ease-in-out border-l border-slate-200 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

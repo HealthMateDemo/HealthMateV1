@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import useShowMore from "@/hooks/useShowMore";
 import { WebSocketMessage, websocketService } from "@/lib/websocket";
 import { getImagesCount } from "@/util/imagesNumber";
+import { getInfoCount } from "@/util/infoNumber";
 import { getNotesCount } from "@/util/notesNumber";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CategoryCreate from "../atoms/CategoryCreate";
@@ -13,6 +14,7 @@ import CategoryListSection from "../molecules/CategoryListSection";
 import ChatHeader from "../molecules/ChatHeader";
 import ChatSidebarHeader from "../molecules/ChatSidebarHeader";
 import ImagesSidebar from "../molecules/ImagesSidebar";
+import InfoSidebar from "../molecules/InfoSidebar";
 import NotesSidebar from "../molecules/NotesSidebar";
 import RecentMessagesSection from "../molecules/RecentMessagesSection";
 import ConversationList from "./ConversationList";
@@ -47,6 +49,22 @@ interface SavedImage {
   conversationId?: string;
 }
 
+interface SavedUrl {
+  id: string;
+  url: string;
+  title: string;
+  timestamp: Date;
+  conversationId?: string;
+}
+
+interface SavedEmail {
+  id: string;
+  email: string;
+  title: string;
+  timestamp: Date;
+  conversationId?: string;
+}
+
 interface MainChatAreaProps {
   onClose: () => void;
   conversations: Conversation[];
@@ -66,6 +84,9 @@ export default function MainChatArea({ onClose, conversations, currentConversati
   const notesLoadedRef = useRef(false);
   const [savedImages, setSavedImages] = useState<SavedImage[]>([]);
   const [isImagesOpen, setIsImagesOpen] = useState(false);
+  const [savedUrls, setSavedUrls] = useState<SavedUrl[]>([]);
+  const [savedEmails, setSavedEmails] = useState<SavedEmail[]>([]);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
 
   // Load notes, images, and sidebar state from localStorage
   useEffect(() => {
@@ -133,6 +154,34 @@ export default function MainChatArea({ onClose, conversations, currentConversati
       }
     }
   }, [conversations, savedImages.length]);
+
+  // Extract URLs and emails from existing conversations and add to saved info
+  useEffect(() => {
+    if (notesLoadedRef.current && savedUrls.length === 0 && savedEmails.length === 0) {
+      const extractedUrls: SavedUrl[] = [];
+      const extractedEmails: SavedEmail[] = [];
+
+      conversations.forEach((conversation) => {
+        conversation.messages.forEach((message) => {
+          if (message.sender === "ai" && message.type === "text") {
+            const { urls, emails } = extractUrlsAndEmails(message.content);
+            extractedUrls.push(...urls);
+            extractedEmails.push(...emails);
+          }
+        });
+      });
+
+      if (extractedUrls.length > 0) {
+        setSavedUrls(extractedUrls);
+        localStorage.setItem("zenhealth-urls-history", JSON.stringify(extractedUrls));
+      }
+
+      if (extractedEmails.length > 0) {
+        setSavedEmails(extractedEmails);
+        localStorage.setItem("zenhealth-emails-history", JSON.stringify(extractedEmails));
+      }
+    }
+  }, [conversations, savedUrls.length, savedEmails.length]);
 
   // Ensure notes are available when currentConversation changes
   useEffect(() => {
@@ -546,6 +595,24 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     return getImagesCount();
   };
 
+  // Info handlers
+  const handleInfoToggle = () => {
+    setIsInfoOpen(!isInfoOpen);
+  };
+
+  const handleUrlsChange = (newUrls: SavedUrl[]) => {
+    setSavedUrls(newUrls);
+  };
+
+  const handleEmailsChange = (newEmails: SavedEmail[]) => {
+    setSavedEmails(newEmails);
+  };
+
+  // Get current info count
+  const getCurrentInfoCount = () => {
+    return getInfoCount();
+  };
+
   // Add a new category
   const handleAddCategory = () => {
     const cat = newCategory.trim().toLowerCase();
@@ -594,6 +661,46 @@ export default function MainChatArea({ onClose, conversations, currentConversati
     return matchesCategory && matchesSearch;
   });
 
+  // Extract URLs and emails from text content
+  const extractUrlsAndEmails = (content: string) => {
+    const urls: SavedUrl[] = [];
+    const emails: SavedEmail[] = [];
+
+    // Extract URLs
+    const urlRegex = /https?:\/\/[^\s]+/g;
+    const urlMatches = content.match(urlRegex);
+    if (urlMatches) {
+      urlMatches.forEach((url) => {
+        // Clean up URL (remove trailing punctuation)
+        const cleanUrl = url.replace(/[.,;!?]+$/, "");
+        urls.push({
+          id: generateId(),
+          url: cleanUrl,
+          title: `URL from AI response`,
+          timestamp: new Date(),
+          conversationId: currentConversation?.id,
+        });
+      });
+    }
+
+    // Extract emails
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const emailMatches = content.match(emailRegex);
+    if (emailMatches) {
+      emailMatches.forEach((email) => {
+        emails.push({
+          id: generateId(),
+          email: email,
+          title: `Email from AI response`,
+          timestamp: new Date(),
+          conversationId: currentConversation?.id,
+        });
+      });
+    }
+
+    return { urls, emails };
+  };
+
   // In handleWebSocketMessage, after updating conversations, set currentConversation to the updated object from conversations
   const handleWebSocketMessage = (message: WebSocketMessage) => {
     if (message.type === "message" && message.sender === "ai" && message.conversationId) {
@@ -619,6 +726,24 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         setCurrentConversation(updated.find((c) => c.id === message.conversationId) || null);
         return updated;
       });
+
+      // Extract and save URLs and emails from AI response
+      if (message.content) {
+        const { urls, emails } = extractUrlsAndEmails(message.content);
+
+        if (urls.length > 0) {
+          const updatedUrls = [...urls, ...savedUrls.slice(0, 9)]; // Keep last 10 URLs
+          setSavedUrls(updatedUrls);
+          localStorage.setItem("zenhealth-urls-history", JSON.stringify(updatedUrls));
+        }
+
+        if (emails.length > 0) {
+          const updatedEmails = [...emails, ...savedEmails.slice(0, 9)]; // Keep last 10 emails
+          setSavedEmails(updatedEmails);
+          localStorage.setItem("zenhealth-emails-history", JSON.stringify(updatedEmails));
+        }
+      }
+
       setIsTyping(false);
       setIsLoading(false);
     } else if (message.type === "typing") {
@@ -721,6 +846,7 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           dislikeCount={dislikeCount}
           notesCount={getCurrentNotesCount()}
           imagesCount={getCurrentImagesCount()}
+          infoCount={getCurrentInfoCount()}
           onClose={onClose}
           setConversations={setConversations}
           setCurrentConversation={setCurrentConversation}
@@ -730,6 +856,8 @@ export default function MainChatArea({ onClose, conversations, currentConversati
           onNotesToggle={handleNotesToggle}
           isImagesOpen={isImagesOpen}
           onImagesToggle={handleImagesToggle}
+          isInfoOpen={isInfoOpen}
+          onInfoToggle={handleInfoToggle}
         />
 
         {/* Messages Area */}
@@ -784,6 +912,17 @@ export default function MainChatArea({ onClose, conversations, currentConversati
         onClose={() => setIsImagesOpen(false)}
         images={savedImages}
         onImagesChange={handleImagesChange}
+      />
+
+      {/* Info Sidebar */}
+      <InfoSidebar
+        key={`info-${currentConversation?.id || "no-conversation"}`}
+        isOpen={isInfoOpen}
+        onClose={() => setIsInfoOpen(false)}
+        urls={savedUrls}
+        emails={savedEmails}
+        onUrlsChange={handleUrlsChange}
+        onEmailsChange={handleEmailsChange}
       />
     </div>
   );
